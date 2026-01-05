@@ -3,13 +3,16 @@ import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { AIAnalysisCard, JournalAnalysis } from "@/components/AIAnalysisCard";
+import { useJournalAnalysis } from "@/hooks/useJournalAnalysis";
+import { useToast } from "@/hooks/use-toast";
 import { 
   BookOpen, 
-  Calendar, 
   Sparkles, 
   Send, 
   Clock,
-  ChevronRight
+  ChevronRight,
+  Brain
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,7 +22,8 @@ interface JournalEntryData {
   time: string;
   content: string;
   mood: string;
-  sentiment: "positive" | "neutral" | "negative";
+  sentiment: "positive" | "neutral" | "negative" | "mixed";
+  analysis?: JournalAnalysis;
 }
 
 const sampleEntries: JournalEntryData[] = [
@@ -61,20 +65,34 @@ export default function Journal() {
   const [newEntry, setNewEntry] = useState("");
   const [entries, setEntries] = useState(sampleEntries);
   const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
+  const { analysis, isLoading, error, analyzeEntry, clearAnalysis } = useJournalAnalysis();
+  const { toast } = useToast();
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!newEntry.trim()) return;
+
+    // Analyze the entry with AI
+    const result = await analyzeEntry(newEntry);
 
     const newEntryData: JournalEntryData = {
       id: Date.now().toString(),
       date: "Just now",
       time: new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
       content: newEntry,
-      mood: "🙂",
-      sentiment: "neutral",
+      mood: result?.sentiment === "positive" ? "😊" : result?.sentiment === "negative" ? "😔" : "🙂",
+      sentiment: result?.sentiment || "neutral",
+      analysis: result || undefined,
     };
 
     setEntries([newEntryData, ...entries]);
+    
+    toast({
+      title: "Entry saved",
+      description: result 
+        ? "Your journal entry has been analyzed and saved." 
+        : "Your entry was saved but analysis failed.",
+    });
+
     setNewEntry("");
     setSelectedPrompt(null);
   };
@@ -82,6 +100,7 @@ export default function Journal() {
   const usePrompt = (prompt: string) => {
     setSelectedPrompt(prompt);
     setNewEntry(`${prompt}\n\n`);
+    clearAnalysis();
   };
 
   return (
@@ -93,13 +112,13 @@ export default function Journal() {
         <div className="mb-8 animate-fade-up">
           <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <BookOpen className="h-4 w-4" />
-            <span className="text-sm">Your Private Journal</span>
+            <span className="text-sm">AI-Powered Journal</span>
           </div>
           <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">
             Reflect & Express
           </h1>
           <p className="text-muted-foreground mt-2">
-            Write freely. Your thoughts are encrypted and private.
+            Write freely and receive AI-powered insights about your emotional well-being.
           </p>
         </div>
 
@@ -112,26 +131,58 @@ export default function Journal() {
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <Sparkles className="h-5 w-5 text-primary" />
                   New Entry
+                  {isLoading && (
+                    <span className="text-xs text-muted-foreground font-normal ml-auto flex items-center gap-1">
+                      <Brain className="h-3 w-3 animate-pulse" />
+                      AI is analyzing...
+                    </span>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <Textarea
                   placeholder="What's on your mind? Write about your feelings, experiences, or anything you want to reflect on..."
                   value={newEntry}
-                  onChange={(e) => setNewEntry(e.target.value)}
+                  onChange={(e) => {
+                    setNewEntry(e.target.value);
+                    if (analysis) clearAnalysis();
+                  }}
                   className="min-h-[200px] resize-none rounded-xl border-border/50 bg-background/50 focus:border-primary/50 focus:ring-primary/20 text-base leading-relaxed"
+                  disabled={isLoading}
                 />
                 <div className="flex justify-between items-center">
                   <p className="text-xs text-muted-foreground">
-                    {newEntry.length} characters
+                    {newEntry.length} characters • AI will analyze your entry
                   </p>
-                  <Button onClick={handleSave} disabled={!newEntry.trim()} className="gap-2">
-                    <Send className="h-4 w-4" />
-                    Save Entry
+                  <Button 
+                    onClick={handleSave} 
+                    disabled={!newEntry.trim() || isLoading} 
+                    className="gap-2"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Brain className="h-4 w-4 animate-pulse" />
+                        Analyzing...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4" />
+                        Save & Analyze
+                      </>
+                    )}
                   </Button>
                 </div>
               </CardContent>
             </Card>
+
+            {/* AI Analysis Results */}
+            <div className="animate-fade-up" style={{ animationDelay: "100ms" }}>
+              <AIAnalysisCard 
+                analysis={analysis} 
+                isLoading={isLoading} 
+                error={error} 
+              />
+            </div>
 
             {/* Past Entries */}
             <div className="space-y-4 animate-fade-up" style={{ animationDelay: "200ms" }}>
@@ -159,7 +210,8 @@ export default function Journal() {
                         "px-2 py-1 rounded-full text-xs font-medium",
                         entry.sentiment === "positive" && "bg-mood-great/20 text-mood-great",
                         entry.sentiment === "neutral" && "bg-primary/10 text-primary",
-                        entry.sentiment === "negative" && "bg-mood-low/20 text-mood-low"
+                        entry.sentiment === "negative" && "bg-mood-low/20 text-mood-low",
+                        entry.sentiment === "mixed" && "bg-secondary/50 text-secondary-foreground"
                       )}>
                         {entry.sentiment}
                       </div>
@@ -196,6 +248,7 @@ export default function Journal() {
                       selectedPrompt === prompt && "bg-primary-soft border border-primary/30"
                     )}
                     onClick={() => usePrompt(prompt)}
+                    disabled={isLoading}
                   >
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       {prompt}
@@ -226,9 +279,21 @@ export default function Journal() {
               </CardContent>
             </Card>
 
-            {/* Tip */}
+            {/* AI Feature Info */}
             <div className="p-4 rounded-2xl bg-primary-soft border border-primary/20 animate-fade-up" style={{ animationDelay: "300ms" }}>
-              <p className="text-sm text-primary font-medium mb-1">💡 Journaling Tip</p>
+              <p className="text-sm text-primary font-medium mb-1 flex items-center gap-2">
+                <Brain className="h-4 w-4" />
+                AI-Powered Insights
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Each entry is analyzed for sentiment, stress patterns, and emotional well-being. 
+                Get personalized self-care suggestions based on your writing.
+              </p>
+            </div>
+
+            {/* Tip */}
+            <div className="p-4 rounded-2xl bg-muted/50 border border-border/30 animate-fade-up" style={{ animationDelay: "400ms" }}>
+              <p className="text-sm text-foreground font-medium mb-1">💡 Journaling Tip</p>
               <p className="text-sm text-muted-foreground">
                 Try to write at the same time each day to build a consistent reflection habit.
               </p>
