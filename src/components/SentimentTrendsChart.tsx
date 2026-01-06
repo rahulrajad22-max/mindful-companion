@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { Brain, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { TimeRangeToggle, TimeRange } from "./TimeRangeToggle";
 
 interface SentimentDataPoint {
   date: string;
@@ -12,6 +13,8 @@ interface SentimentDataPoint {
 
 interface SentimentTrendsChartProps {
   data: SentimentDataPoint[];
+  timeRange: TimeRange;
+  onTimeRangeChange: (range: TimeRange) => void;
 }
 
 const getSentimentLabel = (value: number): string => {
@@ -40,7 +43,7 @@ const getTrendIcon = (data: SentimentDataPoint[]) => {
   return <Minus className="h-4 w-4 text-muted-foreground" />;
 };
 
-export function SentimentTrendsChart({ data }: SentimentTrendsChartProps) {
+export function SentimentTrendsChart({ data, timeRange, onTimeRangeChange }: SentimentTrendsChartProps) {
   const averageSentiment = data.length > 0 
     ? data.reduce((sum, d) => sum + d.sentiment, 0) / data.length 
     : 0;
@@ -82,9 +85,12 @@ export function SentimentTrendsChart({ data }: SentimentTrendsChartProps) {
             <Brain className="h-5 w-5 text-primary" />
             Sentiment Analysis
           </CardTitle>
-          <div className="flex items-center gap-2">
-            {getTrendIcon(data)}
-            <span className="text-sm text-muted-foreground">7-day trend</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              {getTrendIcon(data)}
+              <span className="text-sm text-muted-foreground">{timeRange === 'weekly' ? '7-day' : '30-day'} trend</span>
+            </div>
+            <TimeRangeToggle value={timeRange} onChange={onTimeRangeChange} />
           </div>
         </div>
       </CardHeader>

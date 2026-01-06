@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Navbar } from "@/components/Navbar";
 import { MoodSelector } from "@/components/MoodSelector";
 import { MoodChart } from "@/components/MoodChart";
@@ -8,6 +8,7 @@ import { InsightCard } from "@/components/InsightCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, Sun, Moon, Droplets, Activity } from "lucide-react";
+import { TimeRange } from "@/components/TimeRangeToggle";
 
 type MoodLevel = "great" | "good" | "okay" | "low" | "bad";
 
@@ -19,8 +20,8 @@ const moodToNumber: Record<MoodLevel, number> = {
   bad: 1,
 };
 
-// Sample data for the mood chart
-const sampleMoodData = [
+// Sample weekly data for the mood chart
+const weeklyMoodData = [
   { date: "Mon", mood: 4, label: "Good" },
   { date: "Tue", mood: 3, label: "Okay" },
   { date: "Wed", mood: 4, label: "Good" },
@@ -30,8 +31,16 @@ const sampleMoodData = [
   { date: "Sun", mood: 4, label: "Good" },
 ];
 
-// Sample sentiment data from journal analysis
-const sampleSentimentData = [
+// Sample monthly data for the mood chart
+const monthlyMoodData = [
+  { date: "Week 1", mood: 3, label: "Okay" },
+  { date: "Week 2", mood: 4, label: "Good" },
+  { date: "Week 3", mood: 3, label: "Okay" },
+  { date: "Week 4", mood: 5, label: "Great" },
+];
+
+// Sample weekly sentiment data from journal analysis
+const weeklySentimentData = [
   { date: "Mon", sentiment: 0.3, stressLevel: 45, mood: 4 },
   { date: "Tue", sentiment: -0.1, stressLevel: 62, mood: 3 },
   { date: "Wed", sentiment: 0.5, stressLevel: 38, mood: 4 },
@@ -41,11 +50,29 @@ const sampleSentimentData = [
   { date: "Sun", sentiment: 0.6, stressLevel: 30, mood: 4 },
 ];
 
+// Sample monthly sentiment data
+const monthlySentimentData = [
+  { date: "Week 1", sentiment: 0.2, stressLevel: 52, mood: 3 },
+  { date: "Week 2", sentiment: 0.4, stressLevel: 40, mood: 4 },
+  { date: "Week 3", sentiment: 0.1, stressLevel: 58, mood: 3 },
+  { date: "Week 4", sentiment: 0.6, stressLevel: 32, mood: 5 },
+];
+
 export default function Dashboard() {
   const [selectedMood, setSelectedMood] = useState<MoodLevel>();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [moodData, setMoodData] = useState(sampleMoodData);
-  const [sentimentData, setSentimentData] = useState(sampleSentimentData);
+  const [moodTimeRange, setMoodTimeRange] = useState<TimeRange>("weekly");
+  const [sentimentTimeRange, setSentimentTimeRange] = useState<TimeRange>("weekly");
+
+  const moodData = useMemo(() => 
+    moodTimeRange === "weekly" ? weeklyMoodData : monthlyMoodData, 
+    [moodTimeRange]
+  );
+
+  const sentimentData = useMemo(() => 
+    sentimentTimeRange === "weekly" ? weeklySentimentData : monthlySentimentData, 
+    [sentimentTimeRange]
+  );
 
   const handleMoodSelect = (mood: MoodLevel) => {
     setSelectedMood(mood);
@@ -113,12 +140,20 @@ export default function Dashboard() {
 
             {/* Sentiment Trends Chart */}
             <div className="animate-fade-up" style={{ animationDelay: "300ms" }}>
-              <SentimentTrendsChart data={sentimentData} />
+              <SentimentTrendsChart 
+                data={sentimentData} 
+                timeRange={sentimentTimeRange}
+                onTimeRangeChange={setSentimentTimeRange}
+              />
             </div>
 
             {/* Mood Chart */}
             <div className="animate-fade-up" style={{ animationDelay: "400ms" }}>
-              <MoodChart data={moodData} />
+              <MoodChart 
+                data={moodData} 
+                timeRange={moodTimeRange}
+                onTimeRangeChange={setMoodTimeRange}
+              />
             </div>
           </div>
 
