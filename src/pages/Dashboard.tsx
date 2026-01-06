@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { MoodSelector } from "@/components/MoodSelector";
 import { MoodChart } from "@/components/MoodChart";
+import { SentimentTrendsChart } from "@/components/SentimentTrendsChart";
 import { JournalEntry } from "@/components/JournalEntry";
 import { InsightCard } from "@/components/InsightCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +19,7 @@ const moodToNumber: Record<MoodLevel, number> = {
   bad: 1,
 };
 
-// Sample data for the chart
+// Sample data for the mood chart
 const sampleMoodData = [
   { date: "Mon", mood: 4, label: "Good" },
   { date: "Tue", mood: 3, label: "Okay" },
@@ -29,10 +30,22 @@ const sampleMoodData = [
   { date: "Sun", mood: 4, label: "Good" },
 ];
 
+// Sample sentiment data from journal analysis
+const sampleSentimentData = [
+  { date: "Mon", sentiment: 0.3, stressLevel: 45, mood: 4 },
+  { date: "Tue", sentiment: -0.1, stressLevel: 62, mood: 3 },
+  { date: "Wed", sentiment: 0.5, stressLevel: 38, mood: 4 },
+  { date: "Thu", sentiment: 0.7, stressLevel: 25, mood: 5 },
+  { date: "Fri", sentiment: 0.4, stressLevel: 42, mood: 4 },
+  { date: "Sat", sentiment: 0.1, stressLevel: 55, mood: 3 },
+  { date: "Sun", sentiment: 0.6, stressLevel: 30, mood: 4 },
+];
+
 export default function Dashboard() {
   const [selectedMood, setSelectedMood] = useState<MoodLevel>();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [moodData, setMoodData] = useState(sampleMoodData);
+  const [sentimentData, setSentimentData] = useState(sampleSentimentData);
 
   const handleMoodSelect = (mood: MoodLevel) => {
     setSelectedMood(mood);
@@ -98,8 +111,13 @@ export default function Dashboard() {
               <JournalEntry onSave={handleJournalSave} isAnalyzing={isAnalyzing} />
             </div>
 
-            {/* Mood Chart */}
+            {/* Sentiment Trends Chart */}
             <div className="animate-fade-up" style={{ animationDelay: "300ms" }}>
+              <SentimentTrendsChart data={sentimentData} />
+            </div>
+
+            {/* Mood Chart */}
+            <div className="animate-fade-up" style={{ animationDelay: "400ms" }}>
               <MoodChart data={moodData} />
             </div>
           </div>
