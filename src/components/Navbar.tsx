@@ -66,9 +66,12 @@ export function Navbar() {
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           ) : user ? (
             <>
-              <span className="text-sm text-muted-foreground hidden sm:block">
-                {user.email}
-              </span>
+              <Link to="/profile">
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <User className="h-4 w-4" />
+                  <span className="hidden sm:inline">Profile</span>
+                </Button>
+              </Link>
               <Button variant="outline" size="sm" onClick={handleSignOut} className="gap-2">
                 <LogOut className="h-4 w-4" />
                 <span className="hidden sm:inline">Sign Out</span>
