@@ -44,6 +44,39 @@ export type Database = {
         }
         Relationships: []
       }
+      wellness_logs: {
+        Row: {
+          created_at: string
+          exercise_minutes: number
+          id: string
+          log_date: string
+          sleep_hours: number
+          updated_at: string
+          user_id: string
+          water_glasses: number
+        }
+        Insert: {
+          created_at?: string
+          exercise_minutes?: number
+          id?: string
+          log_date?: string
+          sleep_hours?: number
+          updated_at?: string
+          user_id: string
+          water_glasses?: number
+        }
+        Update: {
+          created_at?: string
+          exercise_minutes?: number
+          id?: string
+          log_date?: string
+          sleep_hours?: number
+          updated_at?: string
+          user_id?: string
+          water_glasses?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
