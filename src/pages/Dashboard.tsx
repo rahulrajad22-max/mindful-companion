@@ -5,9 +5,10 @@ import { MoodChart } from "@/components/MoodChart";
 import { SentimentTrendsChart } from "@/components/SentimentTrendsChart";
 import { JournalEntry } from "@/components/JournalEntry";
 import { InsightCard } from "@/components/InsightCard";
+import { WellnessTracker } from "@/components/WellnessTracker";
+import { QuickResources } from "@/components/QuickResources";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Calendar, Sun, Moon, Droplets, Activity } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { TimeRange } from "@/components/TimeRangeToggle";
 
 type MoodLevel = "great" | "good" | "okay" | "low" | "bad";
@@ -63,6 +64,12 @@ export default function Dashboard() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [moodTimeRange, setMoodTimeRange] = useState<TimeRange>("weekly");
   const [sentimentTimeRange, setSentimentTimeRange] = useState<TimeRange>("weekly");
+  const [wellnessData, setWellnessData] = useState({
+    sleep: 7,
+    water: 5,
+    exercise: 30,
+    journalEntries: 2,
+  });
 
   const moodData = useMemo(() => 
     moodTimeRange === "weekly" ? weeklyMoodData : monthlyMoodData, 
@@ -160,33 +167,9 @@ export default function Dashboard() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Quick Stats */}
-            <Card className="animate-fade-up" style={{ animationDelay: "150ms" }}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Today's Wellness</CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-4">
-                <div className="text-center p-3 rounded-xl bg-muted/50">
-                  <Sun className="h-5 w-5 text-mood-okay mx-auto mb-1" />
-                  <p className="text-2xl font-display font-bold text-foreground">7</p>
-                  <p className="text-xs text-muted-foreground">hrs sleep</p>
-                </div>
-                <div className="text-center p-3 rounded-xl bg-muted/50">
-                  <Droplets className="h-5 w-5 text-primary mx-auto mb-1" />
-                  <p className="text-2xl font-display font-bold text-foreground">5</p>
-                  <p className="text-xs text-muted-foreground">glasses water</p>
-                </div>
-                <div className="text-center p-3 rounded-xl bg-muted/50">
-                  <Activity className="h-5 w-5 text-mood-great mx-auto mb-1" />
-                  <p className="text-2xl font-display font-bold text-foreground">30</p>
-                  <p className="text-xs text-muted-foreground">min exercise</p>
-                </div>
-                <div className="text-center p-3 rounded-xl bg-muted/50">
-                  <Moon className="h-5 w-5 text-secondary-foreground mx-auto mb-1" />
-                  <p className="text-2xl font-display font-bold text-foreground">2</p>
-                  <p className="text-xs text-muted-foreground">journal entries</p>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="animate-fade-up" style={{ animationDelay: "150ms" }}>
+              <WellnessTracker data={wellnessData} onUpdate={setWellnessData} />
+            </div>
 
             {/* AI Insights */}
             <div className="space-y-4 animate-fade-up" style={{ animationDelay: "250ms" }}>
@@ -215,31 +198,9 @@ export default function Dashboard() {
             </div>
 
             {/* Resources */}
-            <Card className="animate-fade-up" style={{ animationDelay: "350ms" }}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Quick Resources</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Button variant="ghost" className="w-full justify-start text-left h-auto py-3">
-                  <div>
-                    <p className="font-medium">Breathing Exercise</p>
-                    <p className="text-xs text-muted-foreground">4-7-8 calming technique</p>
-                  </div>
-                </Button>
-                <Button variant="ghost" className="w-full justify-start text-left h-auto py-3">
-                  <div>
-                    <p className="font-medium">Gratitude Prompt</p>
-                    <p className="text-xs text-muted-foreground">Quick reflection starter</p>
-                  </div>
-                </Button>
-                <Button variant="ghost" className="w-full justify-start text-left h-auto py-3">
-                  <div>
-                    <p className="font-medium">Crisis Hotlines</p>
-                    <p className="text-xs text-muted-foreground">24/7 professional support</p>
-                  </div>
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="animate-fade-up" style={{ animationDelay: "350ms" }}>
+              <QuickResources />
+            </div>
           </div>
         </div>
       </main>
