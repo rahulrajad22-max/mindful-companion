@@ -64,12 +64,6 @@ export default function Dashboard() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [moodTimeRange, setMoodTimeRange] = useState<TimeRange>("weekly");
   const [sentimentTimeRange, setSentimentTimeRange] = useState<TimeRange>("weekly");
-  const [wellnessData, setWellnessData] = useState({
-    sleep: 7,
-    water: 5,
-    exercise: 30,
-    journalEntries: 2,
-  });
 
   const moodData = useMemo(() => 
     moodTimeRange === "weekly" ? weeklyMoodData : monthlyMoodData, 
@@ -168,7 +162,7 @@ export default function Dashboard() {
           <div className="space-y-6">
             {/* Quick Stats */}
             <div className="animate-fade-up" style={{ animationDelay: "150ms" }}>
-              <WellnessTracker data={wellnessData} onUpdate={setWellnessData} />
+              <WellnessTracker />
             </div>
 
             {/* AI Insights */}

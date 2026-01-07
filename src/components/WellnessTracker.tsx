@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,10 +8,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { Sun, Moon, Droplets, Activity, Pencil } from "lucide-react";
+import { Sun, Moon, Droplets, Activity, Pencil, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface WellnessData {
   sleep: number;
@@ -21,23 +22,72 @@ interface WellnessData {
 }
 
 interface WellnessTrackerProps {
-  data: WellnessData;
-  onUpdate: (data: WellnessData) => void;
+  journalCount?: number;
 }
 
-export function WellnessTracker({ data, onUpdate }: WellnessTrackerProps) {
+export function WellnessTracker({ journalCount = 0 }: WellnessTrackerProps) {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [editingField, setEditingField] = useState<keyof WellnessData | null>(null);
+  const [editingField, setEditingField] = useState<keyof Omit<WellnessData, 'journalEntries'> | null>(null);
   const [tempValue, setTempValue] = useState("");
+  const [data, setData] = useState<WellnessData>({
+    sleep: 0,
+    water: 0,
+    exercise: 0,
+    journalEntries: journalCount,
+  });
 
-  const openEdit = (field: keyof WellnessData) => {
+  useEffect(() => {
+    if (user) {
+      fetchTodayLog();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    setData(prev => ({ ...prev, journalEntries: journalCount }));
+  }, [journalCount]);
+
+  const fetchTodayLog = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      
+      const { data: log, error } = await supabase
+        .from("wellness_logs")
+        .select("sleep_hours, water_glasses, exercise_minutes")
+        .eq("user_id", user.id)
+        .eq("log_date", today)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (log) {
+        setData(prev => ({
+          ...prev,
+          sleep: log.sleep_hours,
+          water: log.water_glasses,
+          exercise: log.exercise_minutes,
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching wellness log:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openEdit = (field: keyof Omit<WellnessData, 'journalEntries'>) => {
     setEditingField(field);
     setTempValue(data[field].toString());
     setEditOpen(true);
   };
 
-  const handleSave = () => {
-    if (editingField === null) return;
+  const handleSave = async () => {
+    if (editingField === null || !user) return;
     
     const value = parseInt(tempValue, 10);
     if (isNaN(value) || value < 0) {
@@ -45,11 +95,10 @@ export function WellnessTracker({ data, onUpdate }: WellnessTrackerProps) {
       return;
     }
 
-    const maxValues: Record<keyof WellnessData, number> = {
+    const maxValues: Record<keyof Omit<WellnessData, 'journalEntries'>, number> = {
       sleep: 24,
       water: 20,
       exercise: 300,
-      journalEntries: 50,
     };
 
     if (value > maxValues[editingField]) {
@@ -57,28 +106,83 @@ export function WellnessTracker({ data, onUpdate }: WellnessTrackerProps) {
       return;
     }
 
-    onUpdate({ ...data, [editingField]: value });
-    toast.success("Wellness data updated!");
-    setEditOpen(false);
-    setEditingField(null);
+    setSaving(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const fieldMap: Record<string, string> = {
+        sleep: "sleep_hours",
+        water: "water_glasses",
+        exercise: "exercise_minutes",
+      };
+
+      // First try to get existing record
+      const { data: existing } = await supabase
+        .from("wellness_logs")
+        .select("id, sleep_hours, water_glasses, exercise_minutes")
+        .eq("user_id", user.id)
+        .eq("log_date", today)
+        .maybeSingle();
+
+      if (existing) {
+        // Update existing record
+        const { error } = await supabase
+          .from("wellness_logs")
+          .update({ [fieldMap[editingField]]: value })
+          .eq("id", existing.id);
+        
+        if (error) throw error;
+      } else {
+        // Insert new record
+        const { error } = await supabase
+          .from("wellness_logs")
+          .insert({
+            user_id: user.id,
+            log_date: today,
+            [fieldMap[editingField]]: value,
+          });
+        
+        if (error) throw error;
+      }
+
+      setData(prev => ({ ...prev, [editingField]: value }));
+      toast.success("Wellness data updated!");
+      setEditOpen(false);
+      setEditingField(null);
+    } catch (error) {
+      console.error("Error saving wellness log:", error);
+      toast.error("Failed to save wellness data");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const getFieldLabel = (field: keyof WellnessData) => {
-    const labels: Record<keyof WellnessData, string> = {
+  const getFieldLabel = (field: keyof Omit<WellnessData, 'journalEntries'>) => {
+    const labels: Record<keyof Omit<WellnessData, 'journalEntries'>, string> = {
       sleep: "Hours of Sleep",
       water: "Glasses of Water",
       exercise: "Minutes of Exercise",
-      journalEntries: "Journal Entries",
     };
     return labels[field];
   };
 
-  const stats = [
+  const editableStats = [
     { key: "sleep" as const, icon: Sun, value: data.sleep, unit: "hrs sleep", color: "text-mood-okay" },
     { key: "water" as const, icon: Droplets, value: data.water, unit: "glasses water", color: "text-primary" },
     { key: "exercise" as const, icon: Activity, value: data.exercise, unit: "min exercise", color: "text-mood-great" },
-    { key: "journalEntries" as const, icon: Moon, value: data.journalEntries, unit: "journal entries", color: "text-secondary-foreground" },
   ];
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg">Today's Wellness</CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -86,7 +190,7 @@ export function WellnessTracker({ data, onUpdate }: WellnessTrackerProps) {
         <CardTitle className="text-lg">Today's Wellness</CardTitle>
       </CardHeader>
       <CardContent className="grid grid-cols-2 gap-4">
-        {stats.map((stat) => (
+        {editableStats.map((stat) => (
           <button
             key={stat.key}
             onClick={() => openEdit(stat.key)}
@@ -100,6 +204,13 @@ export function WellnessTracker({ data, onUpdate }: WellnessTrackerProps) {
             <p className="text-xs text-muted-foreground">{stat.unit}</p>
           </button>
         ))}
+        
+        {/* Journal entries - not editable */}
+        <div className="text-center p-3 rounded-xl bg-muted/50">
+          <Moon className="h-5 w-5 text-secondary-foreground mx-auto mb-1" />
+          <p className="text-2xl font-display font-bold text-foreground">{data.journalEntries}</p>
+          <p className="text-xs text-muted-foreground">journal entries</p>
+        </div>
       </CardContent>
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
@@ -123,8 +234,8 @@ export function WellnessTracker({ data, onUpdate }: WellnessTrackerProps) {
                 onKeyDown={(e) => e.key === "Enter" && handleSave()}
               />
             </div>
-            <Button onClick={handleSave} className="w-full">
-              Save
+            <Button onClick={handleSave} className="w-full" disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
             </Button>
           </div>
         </DialogContent>
