@@ -7,6 +7,7 @@ import { JournalEntry } from "@/components/JournalEntry";
 import { InsightCard } from "@/components/InsightCard";
 import { WellnessTracker } from "@/components/WellnessTracker";
 import { WeeklyWellnessSummary } from "@/components/WeeklyWellnessSummary";
+import { WellnessExercises } from "@/components/WellnessExercises";
 import { QuickResources } from "@/components/QuickResources";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "lucide-react";
@@ -197,8 +198,13 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* Resources */}
+            {/* Wellness Exercises */}
             <div className="animate-fade-up" style={{ animationDelay: "350ms" }}>
+              <WellnessExercises />
+            </div>
+
+            {/* Resources */}
+            <div className="animate-fade-up" style={{ animationDelay: "400ms" }}>
               <QuickResources />
             </div>
           </div>
