@@ -6,6 +6,7 @@ import { SentimentTrendsChart } from "@/components/SentimentTrendsChart";
 import { JournalEntry } from "@/components/JournalEntry";
 import { InsightCard } from "@/components/InsightCard";
 import { WellnessTracker } from "@/components/WellnessTracker";
+import { WeeklyWellnessSummary } from "@/components/WeeklyWellnessSummary";
 import { QuickResources } from "@/components/QuickResources";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "lucide-react";
@@ -163,6 +164,11 @@ export default function Dashboard() {
             {/* Quick Stats */}
             <div className="animate-fade-up" style={{ animationDelay: "150ms" }}>
               <WellnessTracker />
+            </div>
+
+            {/* Weekly Summary */}
+            <div className="animate-fade-up" style={{ animationDelay: "200ms" }}>
+              <WeeklyWellnessSummary />
             </div>
 
             {/* AI Insights */}
