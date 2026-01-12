@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -21,7 +22,9 @@ import {
   Flame,
   Trophy,
   History,
-  Star
+  Star,
+  Plus,
+  Minus
 } from "lucide-react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
@@ -33,7 +36,7 @@ interface Exercise {
   id: string;
   name: string;
   description: string;
-  duration: number;
+  suggestedDuration: number;
   icon: React.ElementType;
   color: string;
   bgColor: string;
@@ -60,7 +63,7 @@ const exercises: Exercise[] = [
     id: "box-breathing",
     name: "Box Breathing",
     description: "Calm your nervous system with 4-4-4-4 breathing",
-    duration: 240,
+    suggestedDuration: 240,
     icon: Wind,
     color: "text-primary",
     bgColor: "bg-primary/10",
@@ -76,7 +79,7 @@ const exercises: Exercise[] = [
     id: "5-4-3-2-1-grounding",
     name: "5-4-3-2-1 Grounding",
     description: "Ground yourself using your 5 senses",
-    duration: 300,
+    suggestedDuration: 300,
     icon: Eye,
     color: "text-mood-great",
     bgColor: "bg-mood-great/10",
@@ -92,7 +95,7 @@ const exercises: Exercise[] = [
     id: "body-scan",
     name: "Body Scan",
     description: "Release tension by scanning your body",
-    duration: 300,
+    suggestedDuration: 300,
     icon: Heart,
     color: "text-mood-bad",
     bgColor: "bg-mood-bad/10",
@@ -108,7 +111,7 @@ const exercises: Exercise[] = [
     id: "mindful-meditation",
     name: "Mindful Meditation",
     description: "Focus on the present moment",
-    duration: 300,
+    suggestedDuration: 300,
     icon: Brain,
     color: "text-mood-okay",
     bgColor: "bg-mood-okay/10",
@@ -124,7 +127,7 @@ const exercises: Exercise[] = [
     id: "gratitude-practice",
     name: "Gratitude Practice",
     description: "Cultivate positivity through gratitude",
-    duration: 180,
+    suggestedDuration: 180,
     icon: Sparkles,
     color: "text-secondary",
     bgColor: "bg-secondary/10",
@@ -146,13 +149,22 @@ const achievements = [
   { id: "streak-champion", name: "Streak Champion", description: "7-day streak", streakRequirement: 7, icon: Flame },
 ];
 
+const DURATION_PRESETS = [
+  { label: "1 min", seconds: 60 },
+  { label: "3 min", seconds: 180 },
+  { label: "5 min", seconds: 300 },
+  { label: "10 min", seconds: 600 },
+];
+
 export function WellnessExercises() {
   const { user } = useAuth();
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(0);
+  const [customDuration, setCustomDuration] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const [showHistory, setShowHistory] = useState(false);
+  const [showTimerSetup, setShowTimerSetup] = useState(true);
   const [completions, setCompletions] = useState<ExerciseCompletion[]>([]);
   const [stats, setStats] = useState<Stats>({
     totalCompletions: 0,
@@ -185,7 +197,6 @@ export function WellnessExercises() {
 
       setCompletions(data || []);
 
-      // Calculate stats
       const today = new Date().toISOString().split("T")[0];
       const oneWeekAgo = new Date();
       oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -198,7 +209,6 @@ export function WellnessExercises() {
         (c) => new Date(c.completed_at) >= oneWeekAgo
       ).length || 0;
 
-      // Calculate streak
       const { currentStreak, longestStreak } = calculateStreak(data || []);
 
       setStats({
@@ -218,7 +228,6 @@ export function WellnessExercises() {
   const calculateStreak = (completions: ExerciseCompletion[]) => {
     if (completions.length === 0) return { currentStreak: 0, longestStreak: 0 };
 
-    // Get unique dates
     const uniqueDates = [...new Set(
       completions.map((c) => c.completed_at.split("T")[0])
     )].sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
@@ -232,7 +241,6 @@ export function WellnessExercises() {
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toISOString().split("T")[0];
 
-    // Check if streak is active (today or yesterday)
     if (uniqueDates[0] === today || uniqueDates[0] === yesterdayStr) {
       currentStreak = 1;
       for (let i = 1; i < uniqueDates.length; i++) {
@@ -250,7 +258,6 @@ export function WellnessExercises() {
       }
     }
 
-    // Calculate longest streak
     for (let i = 1; i < uniqueDates.length; i++) {
       const prevDate = new Date(uniqueDates[i - 1]);
       const currDate = new Date(uniqueDates[i]);
@@ -270,7 +277,7 @@ export function WellnessExercises() {
     return { currentStreak, longestStreak };
   };
 
-  const saveCompletion = async (exercise: Exercise) => {
+  const saveCompletion = async (exercise: Exercise, duration: number) => {
     if (!user) return;
 
     try {
@@ -278,7 +285,7 @@ export function WellnessExercises() {
         user_id: user.id,
         exercise_id: exercise.id,
         exercise_name: exercise.name,
-        duration_seconds: exercise.duration,
+        duration_seconds: duration,
       });
 
       if (error) throw error;
@@ -296,7 +303,7 @@ export function WellnessExercises() {
           if (prev <= 1) {
             setIsRunning(false);
             if (selectedExercise) {
-              saveCompletion(selectedExercise);
+              saveCompletion(selectedExercise, customDuration);
             }
             toast.success("Exercise completed! Great job! 🎉");
             return 0;
@@ -311,36 +318,49 @@ export function WellnessExercises() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isRunning, selectedExercise]);
+  }, [isRunning, selectedExercise, customDuration]);
 
   useEffect(() => {
-    if (selectedExercise && timeRemaining > 0) {
-      const totalDuration = selectedExercise.duration;
-      const stepDuration = totalDuration / selectedExercise.instructions.length;
-      const elapsed = totalDuration - timeRemaining;
+    if (selectedExercise && customDuration > 0 && timeRemaining > 0) {
+      const stepDuration = customDuration / selectedExercise.instructions.length;
+      const elapsed = customDuration - timeRemaining;
       const step = Math.min(
         Math.floor(elapsed / stepDuration),
         selectedExercise.instructions.length - 1
       );
       setCurrentStep(step);
     }
-  }, [timeRemaining, selectedExercise]);
+  }, [timeRemaining, selectedExercise, customDuration]);
 
   const openExercise = (exercise: Exercise) => {
     setSelectedExercise(exercise);
-    setTimeRemaining(exercise.duration);
+    setCustomDuration(exercise.suggestedDuration);
+    setTimeRemaining(exercise.suggestedDuration);
     setIsRunning(false);
     setCurrentStep(0);
+    setShowTimerSetup(true);
   };
 
   const closeExercise = () => {
     setSelectedExercise(null);
     setIsRunning(false);
     setTimeRemaining(0);
+    setCustomDuration(0);
     setCurrentStep(0);
+    setShowTimerSetup(true);
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
+  };
+
+  const startExercise = () => {
+    if (customDuration < 30) {
+      toast.error("Minimum duration is 30 seconds");
+      return;
+    }
+    setTimeRemaining(customDuration);
+    setShowTimerSetup(false);
+    setIsRunning(true);
   };
 
   const toggleTimer = () => {
@@ -348,11 +368,13 @@ export function WellnessExercises() {
   };
 
   const resetTimer = () => {
-    if (selectedExercise) {
-      setTimeRemaining(selectedExercise.duration);
-      setIsRunning(false);
-      setCurrentStep(0);
-    }
+    setTimeRemaining(customDuration);
+    setIsRunning(false);
+    setCurrentStep(0);
+  };
+
+  const adjustDuration = (delta: number) => {
+    setCustomDuration((prev) => Math.max(30, Math.min(3600, prev + delta)));
   };
 
   const formatTime = (seconds: number) => {
@@ -362,8 +384,8 @@ export function WellnessExercises() {
   };
 
   const getProgress = () => {
-    if (!selectedExercise) return 0;
-    return ((selectedExercise.duration - timeRemaining) / selectedExercise.duration) * 100;
+    if (!customDuration) return 0;
+    return ((customDuration - timeRemaining) / customDuration) * 100;
   };
 
   const getUnlockedAchievements = () => {
@@ -405,7 +427,6 @@ export function WellnessExercises() {
           </Button>
         </div>
         
-        {/* Stats Row */}
         {!loadingStats && user && (
           <div className="flex items-center gap-3 mt-2">
             <div className="flex items-center gap-1 text-xs">
@@ -439,13 +460,9 @@ export function WellnessExercises() {
                 {exercise.description}
               </p>
             </div>
-            <span className="text-xs text-muted-foreground">
-              {Math.floor(exercise.duration / 60)}min
-            </span>
           </button>
         ))}
 
-        {/* Achievements Preview */}
         {unlockedAchievements.length > 0 && (
           <div className="pt-2 border-t">
             <p className="text-xs text-muted-foreground mb-2">Achievements</p>
@@ -480,86 +497,164 @@ export function WellnessExercises() {
               </DialogHeader>
 
               <div className="space-y-6 py-4">
-                {/* Timer Display */}
-                <div className="text-center">
-                  <div className="relative inline-flex items-center justify-center">
-                    <div className="w-32 h-32 rounded-full border-4 border-muted flex items-center justify-center">
-                      <span className="text-4xl font-display font-bold text-foreground">
-                        {formatTime(timeRemaining)}
-                      </span>
-                    </div>
-                  </div>
-                  <Progress value={getProgress()} className="mt-4 h-2" />
-                </div>
-
-                {/* Instructions */}
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-foreground">Instructions:</p>
-                  <div className="space-y-2">
-                    {selectedExercise.instructions.map((instruction, index) => (
-                      <div
-                        key={index}
-                        className={`flex items-start gap-2 p-2 rounded-lg transition-all ${
-                          index === currentStep && isRunning
-                            ? "bg-primary/10 scale-[1.02]"
-                            : index < currentStep || timeRemaining === 0
-                            ? "opacity-50"
-                            : ""
-                        }`}
-                      >
-                        <div
-                          className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium ${
-                            index < currentStep || timeRemaining === 0
-                              ? "bg-mood-great text-white"
-                              : index === currentStep && isRunning
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted text-muted-foreground"
-                          }`}
+                {showTimerSetup ? (
+                  <>
+                    {/* Duration Setup */}
+                    <div className="space-y-4">
+                      <p className="text-sm font-medium text-center text-foreground">
+                        Set your timer duration
+                      </p>
+                      
+                      {/* Custom Duration Input */}
+                      <div className="flex items-center justify-center gap-4">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => adjustDuration(-30)}
+                          className="h-10 w-10 rounded-full"
                         >
-                          {index < currentStep || timeRemaining === 0 ? (
-                            <Check className="h-3 w-3" />
-                          ) : (
-                            index + 1
-                          )}
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <div className="text-center">
+                          <span className="text-4xl font-display font-bold text-foreground">
+                            {formatTime(customDuration)}
+                          </span>
                         </div>
-                        <span className="text-sm text-foreground flex-1">
-                          {instruction}
-                        </span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => adjustDuration(30)}
+                          className="h-10 w-10 rounded-full"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
                       </div>
-                    ))}
-                  </div>
-                </div>
 
-                {/* Controls */}
-                <div className="flex items-center justify-center gap-3">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={resetTimer}
-                    className="h-12 w-12 rounded-full"
-                  >
-                    <RotateCcw className="h-5 w-5" />
-                  </Button>
-                  <Button
-                    onClick={toggleTimer}
-                    size="lg"
-                    className="h-14 w-14 rounded-full"
-                    disabled={timeRemaining === 0}
-                  >
-                    {isRunning ? (
-                      <Pause className="h-6 w-6" />
-                    ) : (
-                      <Play className="h-6 w-6 ml-0.5" />
+                      {/* Quick Presets */}
+                      <div className="flex flex-wrap justify-center gap-2">
+                        {DURATION_PRESETS.map((preset) => (
+                          <Button
+                            key={preset.seconds}
+                            variant={customDuration === preset.seconds ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setCustomDuration(preset.seconds)}
+                            className="text-xs"
+                          >
+                            {preset.label}
+                          </Button>
+                        ))}
+                      </div>
+
+                      {/* Instructions Preview */}
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-foreground">Instructions:</p>
+                        <div className="space-y-1">
+                          {selectedExercise.instructions.map((instruction, index) => (
+                            <div
+                              key={index}
+                              className="flex items-start gap-2 p-2 rounded-lg bg-muted/50"
+                            >
+                              <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium bg-muted text-muted-foreground">
+                                {index + 1}
+                              </div>
+                              <span className="text-sm text-foreground flex-1">
+                                {instruction}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <Button onClick={startExercise} className="w-full" size="lg">
+                        <Play className="h-5 w-5 mr-2" />
+                        Start Exercise
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Timer Display */}
+                    <div className="text-center">
+                      <div className="relative inline-flex items-center justify-center">
+                        <div className="w-32 h-32 rounded-full border-4 border-muted flex items-center justify-center">
+                          <span className="text-4xl font-display font-bold text-foreground">
+                            {formatTime(timeRemaining)}
+                          </span>
+                        </div>
+                      </div>
+                      <Progress value={getProgress()} className="mt-4 h-2" />
+                    </div>
+
+                    {/* Instructions */}
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-foreground">Instructions:</p>
+                      <div className="space-y-2">
+                        {selectedExercise.instructions.map((instruction, index) => (
+                          <div
+                            key={index}
+                            className={`flex items-start gap-2 p-2 rounded-lg transition-all ${
+                              index === currentStep && isRunning
+                                ? "bg-primary/10 scale-[1.02]"
+                                : index < currentStep || timeRemaining === 0
+                                ? "opacity-50"
+                                : ""
+                            }`}
+                          >
+                            <div
+                              className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium ${
+                                index < currentStep || timeRemaining === 0
+                                  ? "bg-mood-great text-white"
+                                  : index === currentStep && isRunning
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-muted text-muted-foreground"
+                              }`}
+                            >
+                              {index < currentStep || timeRemaining === 0 ? (
+                                <Check className="h-3 w-3" />
+                              ) : (
+                                index + 1
+                              )}
+                            </div>
+                            <span className="text-sm text-foreground flex-1">
+                              {instruction}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Controls */}
+                    <div className="flex items-center justify-center gap-3">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={resetTimer}
+                        className="h-12 w-12 rounded-full"
+                      >
+                        <RotateCcw className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        onClick={toggleTimer}
+                        size="lg"
+                        className="h-14 w-14 rounded-full"
+                        disabled={timeRemaining === 0}
+                      >
+                        {isRunning ? (
+                          <Pause className="h-6 w-6" />
+                        ) : (
+                          <Play className="h-6 w-6 ml-0.5" />
+                        )}
+                      </Button>
+                    </div>
+
+                    {timeRemaining === 0 && (
+                      <div className="text-center animate-scale-in">
+                        <p className="text-mood-great font-medium">
+                          🎉 Exercise Complete! Great job taking care of yourself.
+                        </p>
+                      </div>
                     )}
-                  </Button>
-                </div>
-
-                {timeRemaining === 0 && (
-                  <div className="text-center animate-scale-in">
-                    <p className="text-mood-great font-medium">
-                      🎉 Exercise Complete! Great job taking care of yourself.
-                    </p>
-                  </div>
+                  </>
                 )}
               </div>
             </>
@@ -578,7 +673,6 @@ export function WellnessExercises() {
           </DialogHeader>
 
           <div className="space-y-6 py-4">
-            {/* Stats Overview */}
             <div className="grid grid-cols-3 gap-3">
               <div className="text-center p-3 rounded-xl bg-muted/50">
                 <Flame className="h-5 w-5 text-orange-500 mx-auto mb-1" />
@@ -597,7 +691,6 @@ export function WellnessExercises() {
               </div>
             </div>
 
-            {/* Achievements */}
             <div>
               <p className="text-sm font-medium mb-2">Achievements</p>
               <div className="space-y-2">
@@ -647,7 +740,6 @@ export function WellnessExercises() {
               </div>
             </div>
 
-            {/* Recent Completions */}
             <div>
               <p className="text-sm font-medium mb-2">Recent Activity</p>
               {completions.length === 0 ? (
