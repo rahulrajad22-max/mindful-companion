@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      exercise_completions: {
+        Row: {
+          completed_at: string
+          created_at: string
+          duration_seconds: number
+          exercise_id: string
+          exercise_name: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          created_at?: string
+          duration_seconds: number
+          exercise_id: string
+          exercise_name: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          created_at?: string
+          duration_seconds?: number
+          exercise_id?: string
+          exercise_name?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

@@ -17,20 +17,42 @@ import {
   Pause,
   RotateCcw,
   Check,
-  Timer
+  Timer,
+  Flame,
+  Trophy,
+  History,
+  Star
 } from "lucide-react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Exercise {
   id: string;
   name: string;
   description: string;
-  duration: number; // in seconds
+  duration: number;
   icon: React.ElementType;
   color: string;
   bgColor: string;
   instructions: string[];
+}
+
+interface ExerciseCompletion {
+  id: string;
+  exercise_id: string;
+  exercise_name: string;
+  completed_at: string;
+}
+
+interface Stats {
+  totalCompletions: number;
+  currentStreak: number;
+  longestStreak: number;
+  todayCount: number;
+  weekCount: number;
 }
 
 const exercises: Exercise[] = [
@@ -116,12 +138,156 @@ const exercises: Exercise[] = [
   },
 ];
 
+const achievements = [
+  { id: "first-step", name: "First Step", description: "Complete your first exercise", requirement: 1, icon: Star },
+  { id: "week-warrior", name: "Week Warrior", description: "Complete 7 exercises", requirement: 7, icon: Trophy },
+  { id: "zen-master", name: "Zen Master", description: "Complete 30 exercises", requirement: 30, icon: Brain },
+  { id: "streak-starter", name: "Streak Starter", description: "3-day streak", streakRequirement: 3, icon: Flame },
+  { id: "streak-champion", name: "Streak Champion", description: "7-day streak", streakRequirement: 7, icon: Flame },
+];
+
 export function WellnessExercises() {
+  const { user } = useAuth();
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
+  const [showHistory, setShowHistory] = useState(false);
+  const [completions, setCompletions] = useState<ExerciseCompletion[]>([]);
+  const [stats, setStats] = useState<Stats>({
+    totalCompletions: 0,
+    currentStreak: 0,
+    longestStreak: 0,
+    todayCount: 0,
+    weekCount: 0,
+  });
+  const [loadingStats, setLoadingStats] = useState(true);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      fetchStats();
+    }
+  }, [user]);
+
+  const fetchStats = async () => {
+    if (!user) return;
+    setLoadingStats(true);
+
+    try {
+      const { data, error } = await supabase
+        .from("exercise_completions")
+        .select("id, exercise_id, exercise_name, completed_at")
+        .eq("user_id", user.id)
+        .order("completed_at", { ascending: false });
+
+      if (error) throw error;
+
+      setCompletions(data || []);
+
+      // Calculate stats
+      const today = new Date().toISOString().split("T")[0];
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+      const todayCount = data?.filter(
+        (c) => c.completed_at.split("T")[0] === today
+      ).length || 0;
+
+      const weekCount = data?.filter(
+        (c) => new Date(c.completed_at) >= oneWeekAgo
+      ).length || 0;
+
+      // Calculate streak
+      const { currentStreak, longestStreak } = calculateStreak(data || []);
+
+      setStats({
+        totalCompletions: data?.length || 0,
+        currentStreak,
+        longestStreak,
+        todayCount,
+        weekCount,
+      });
+    } catch (error) {
+      console.error("Error fetching exercise stats:", error);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
+  const calculateStreak = (completions: ExerciseCompletion[]) => {
+    if (completions.length === 0) return { currentStreak: 0, longestStreak: 0 };
+
+    // Get unique dates
+    const uniqueDates = [...new Set(
+      completions.map((c) => c.completed_at.split("T")[0])
+    )].sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+
+    let currentStreak = 0;
+    let longestStreak = 0;
+    let tempStreak = 1;
+
+    const today = new Date().toISOString().split("T")[0];
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split("T")[0];
+
+    // Check if streak is active (today or yesterday)
+    if (uniqueDates[0] === today || uniqueDates[0] === yesterdayStr) {
+      currentStreak = 1;
+      for (let i = 1; i < uniqueDates.length; i++) {
+        const prevDate = new Date(uniqueDates[i - 1]);
+        const currDate = new Date(uniqueDates[i]);
+        const diffDays = Math.floor(
+          (prevDate.getTime() - currDate.getTime()) / (1000 * 60 * 60 * 24)
+        );
+
+        if (diffDays === 1) {
+          currentStreak++;
+        } else {
+          break;
+        }
+      }
+    }
+
+    // Calculate longest streak
+    for (let i = 1; i < uniqueDates.length; i++) {
+      const prevDate = new Date(uniqueDates[i - 1]);
+      const currDate = new Date(uniqueDates[i]);
+      const diffDays = Math.floor(
+        (prevDate.getTime() - currDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      if (diffDays === 1) {
+        tempStreak++;
+      } else {
+        longestStreak = Math.max(longestStreak, tempStreak);
+        tempStreak = 1;
+      }
+    }
+    longestStreak = Math.max(longestStreak, tempStreak, currentStreak);
+
+    return { currentStreak, longestStreak };
+  };
+
+  const saveCompletion = async (exercise: Exercise) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase.from("exercise_completions").insert({
+        user_id: user.id,
+        exercise_id: exercise.id,
+        exercise_name: exercise.name,
+        duration_seconds: exercise.duration,
+      });
+
+      if (error) throw error;
+
+      await fetchStats();
+    } catch (error) {
+      console.error("Error saving exercise completion:", error);
+    }
+  };
 
   useEffect(() => {
     if (isRunning && timeRemaining > 0) {
@@ -129,6 +295,9 @@ export function WellnessExercises() {
         setTimeRemaining((prev) => {
           if (prev <= 1) {
             setIsRunning(false);
+            if (selectedExercise) {
+              saveCompletion(selectedExercise);
+            }
             toast.success("Exercise completed! Great job! 🎉");
             return 0;
           }
@@ -142,7 +311,7 @@ export function WellnessExercises() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isRunning]);
+  }, [isRunning, selectedExercise]);
 
   useEffect(() => {
     if (selectedExercise && timeRemaining > 0) {
@@ -197,13 +366,60 @@ export function WellnessExercises() {
     return ((selectedExercise.duration - timeRemaining) / selectedExercise.duration) * 100;
   };
 
+  const getUnlockedAchievements = () => {
+    return achievements.filter((a) => {
+      if (a.requirement) return stats.totalCompletions >= a.requirement;
+      if (a.streakRequirement) return stats.longestStreak >= a.streakRequirement;
+      return false;
+    });
+  };
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  };
+
+  const unlockedAchievements = getUnlockedAchievements();
+
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Timer className="h-5 w-5 text-primary" />
-          Wellness Exercises
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Timer className="h-5 w-5 text-primary" />
+            Wellness Exercises
+          </CardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowHistory(true)}
+            className="text-xs"
+          >
+            <History className="h-4 w-4 mr-1" />
+            History
+          </Button>
+        </div>
+        
+        {/* Stats Row */}
+        {!loadingStats && user && (
+          <div className="flex items-center gap-3 mt-2">
+            <div className="flex items-center gap-1 text-xs">
+              <Flame className="h-4 w-4 text-orange-500" />
+              <span className="font-medium">{stats.currentStreak}</span>
+              <span className="text-muted-foreground">day streak</span>
+            </div>
+            <div className="flex items-center gap-1 text-xs">
+              <Trophy className="h-4 w-4 text-yellow-500" />
+              <span className="font-medium">{stats.totalCompletions}</span>
+              <span className="text-muted-foreground">total</span>
+            </div>
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-3">
         {exercises.map((exercise) => (
@@ -228,8 +444,28 @@ export function WellnessExercises() {
             </span>
           </button>
         ))}
+
+        {/* Achievements Preview */}
+        {unlockedAchievements.length > 0 && (
+          <div className="pt-2 border-t">
+            <p className="text-xs text-muted-foreground mb-2">Achievements</p>
+            <div className="flex flex-wrap gap-1">
+              {unlockedAchievements.map((achievement) => (
+                <Badge
+                  key={achievement.id}
+                  variant="secondary"
+                  className="text-xs"
+                >
+                  <achievement.icon className="h-3 w-3 mr-1" />
+                  {achievement.name}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
       </CardContent>
 
+      {/* Exercise Dialog */}
       <Dialog open={!!selectedExercise} onOpenChange={(open) => !open && closeExercise()}>
         <DialogContent className="sm:max-w-[400px]">
           {selectedExercise && (
@@ -328,6 +564,115 @@ export function WellnessExercises() {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* History Dialog */}
+      <Dialog open={showHistory} onOpenChange={setShowHistory}>
+        <DialogContent className="sm:max-w-[450px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Exercise History
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Stats Overview */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="text-center p-3 rounded-xl bg-muted/50">
+                <Flame className="h-5 w-5 text-orange-500 mx-auto mb-1" />
+                <p className="text-2xl font-bold">{stats.currentStreak}</p>
+                <p className="text-xs text-muted-foreground">Current Streak</p>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-muted/50">
+                <Trophy className="h-5 w-5 text-yellow-500 mx-auto mb-1" />
+                <p className="text-2xl font-bold">{stats.longestStreak}</p>
+                <p className="text-xs text-muted-foreground">Best Streak</p>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-muted/50">
+                <Star className="h-5 w-5 text-primary mx-auto mb-1" />
+                <p className="text-2xl font-bold">{stats.weekCount}</p>
+                <p className="text-xs text-muted-foreground">This Week</p>
+              </div>
+            </div>
+
+            {/* Achievements */}
+            <div>
+              <p className="text-sm font-medium mb-2">Achievements</p>
+              <div className="space-y-2">
+                {achievements.map((achievement) => {
+                  const isUnlocked = achievement.requirement
+                    ? stats.totalCompletions >= achievement.requirement
+                    : stats.longestStreak >= (achievement.streakRequirement || 0);
+                  const progress = achievement.requirement
+                    ? Math.min(stats.totalCompletions / achievement.requirement, 1) * 100
+                    : Math.min(stats.longestStreak / (achievement.streakRequirement || 1), 1) * 100;
+
+                  return (
+                    <div
+                      key={achievement.id}
+                      className={`flex items-center gap-3 p-3 rounded-xl ${
+                        isUnlocked ? "bg-primary/10" : "bg-muted/50"
+                      }`}
+                    >
+                      <div
+                        className={`p-2 rounded-lg ${
+                          isUnlocked ? "bg-primary/20" : "bg-muted"
+                        }`}
+                      >
+                        <achievement.icon
+                          className={`h-4 w-4 ${
+                            isUnlocked ? "text-primary" : "text-muted-foreground"
+                          }`}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <p className={`text-sm font-medium ${!isUnlocked && "text-muted-foreground"}`}>
+                          {achievement.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {achievement.description}
+                        </p>
+                        {!isUnlocked && (
+                          <Progress value={progress} className="h-1 mt-1" />
+                        )}
+                      </div>
+                      {isUnlocked && (
+                        <Check className="h-4 w-4 text-mood-great" />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Recent Completions */}
+            <div>
+              <p className="text-sm font-medium mb-2">Recent Activity</p>
+              {completions.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No exercises completed yet. Start your wellness journey!
+                </p>
+              ) : (
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {completions.slice(0, 10).map((completion) => (
+                    <div
+                      key={completion.id}
+                      className="flex items-center justify-between p-2 rounded-lg bg-muted/50"
+                    >
+                      <span className="text-sm font-medium">
+                        {completion.exercise_name}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDate(completion.completed_at)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </Card>
