@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -24,7 +26,16 @@ import {
   History,
   Star,
   Plus,
-  Minus
+  Minus,
+  PlusCircle,
+  Trash2,
+  Edit3,
+  Leaf,
+  Sun,
+  Moon,
+  Zap,
+  Music,
+  Smile
 } from "lucide-react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
@@ -41,6 +52,17 @@ interface Exercise {
   color: string;
   bgColor: string;
   instructions: string[];
+  isCustom?: boolean;
+}
+
+interface CustomExerciseData {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+  steps: string[];
+  default_duration: number;
 }
 
 interface ExerciseCompletion {
@@ -58,7 +80,41 @@ interface Stats {
   weekCount: number;
 }
 
-const exercises: Exercise[] = [
+const ICON_OPTIONS = [
+  { name: "Sparkles", icon: Sparkles },
+  { name: "Heart", icon: Heart },
+  { name: "Brain", icon: Brain },
+  { name: "Wind", icon: Wind },
+  { name: "Eye", icon: Eye },
+  { name: "Leaf", icon: Leaf },
+  { name: "Sun", icon: Sun },
+  { name: "Moon", icon: Moon },
+  { name: "Zap", icon: Zap },
+  { name: "Music", icon: Music },
+  { name: "Smile", icon: Smile },
+  { name: "Star", icon: Star },
+];
+
+const COLOR_OPTIONS = [
+  { name: "Purple", value: "text-purple-500", bg: "bg-purple-500/10" },
+  { name: "Blue", value: "text-blue-500", bg: "bg-blue-500/10" },
+  { name: "Green", value: "text-green-500", bg: "bg-green-500/10" },
+  { name: "Orange", value: "text-orange-500", bg: "bg-orange-500/10" },
+  { name: "Pink", value: "text-pink-500", bg: "bg-pink-500/10" },
+  { name: "Teal", value: "text-teal-500", bg: "bg-teal-500/10" },
+  { name: "Red", value: "text-red-500", bg: "bg-red-500/10" },
+  { name: "Yellow", value: "text-yellow-500", bg: "bg-yellow-500/10" },
+];
+
+const getIconByName = (name: string) => {
+  return ICON_OPTIONS.find(i => i.name === name)?.icon || Sparkles;
+};
+
+const getColorByValue = (value: string) => {
+  return COLOR_OPTIONS.find(c => c.value === value) || COLOR_OPTIONS[0];
+};
+
+const defaultExercises: Exercise[] = [
   {
     id: "box-breathing",
     name: "Box Breathing",
@@ -176,11 +232,43 @@ export function WellnessExercises() {
   const [loadingStats, setLoadingStats] = useState(true);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Custom exercise state
+  const [customExercises, setCustomExercises] = useState<CustomExerciseData[]>([]);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [editingExercise, setEditingExercise] = useState<CustomExerciseData | null>(null);
+  const [newExercise, setNewExercise] = useState({
+    name: "",
+    description: "",
+    icon: "Sparkles",
+    color: "text-purple-500",
+    steps: [""],
+    default_duration: 180,
+  });
+  const [savingExercise, setSavingExercise] = useState(false);
+
   useEffect(() => {
     if (user) {
       fetchStats();
+      fetchCustomExercises();
     }
   }, [user]);
+
+  const fetchCustomExercises = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("custom_exercises" as any)
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setCustomExercises((data || []) as unknown as CustomExerciseData[]);
+    } catch (error) {
+      console.error("Error fetching custom exercises:", error);
+    }
+  };
 
   const fetchStats = async () => {
     if (!user) return;
@@ -406,6 +494,168 @@ export function WellnessExercises() {
     });
   };
 
+  // Custom exercise handlers
+  const openCreateDialog = () => {
+    setEditingExercise(null);
+    setNewExercise({
+      name: "",
+      description: "",
+      icon: "Sparkles",
+      color: "text-purple-500",
+      steps: [""],
+      default_duration: 180,
+    });
+    setShowCreateDialog(true);
+  };
+
+  const openEditDialog = (exercise: CustomExerciseData) => {
+    setEditingExercise(exercise);
+    setNewExercise({
+      name: exercise.name,
+      description: exercise.description,
+      icon: exercise.icon,
+      color: exercise.color,
+      steps: exercise.steps.length > 0 ? exercise.steps : [""],
+      default_duration: exercise.default_duration,
+    });
+    setShowCreateDialog(true);
+  };
+
+  const closeCreateDialog = () => {
+    setShowCreateDialog(false);
+    setEditingExercise(null);
+    setNewExercise({
+      name: "",
+      description: "",
+      icon: "Sparkles",
+      color: "text-purple-500",
+      steps: [""],
+      default_duration: 180,
+    });
+  };
+
+  const addStep = () => {
+    setNewExercise(prev => ({
+      ...prev,
+      steps: [...prev.steps, ""]
+    }));
+  };
+
+  const removeStep = (index: number) => {
+    if (newExercise.steps.length > 1) {
+      setNewExercise(prev => ({
+        ...prev,
+        steps: prev.steps.filter((_, i) => i !== index)
+      }));
+    }
+  };
+
+  const updateStep = (index: number, value: string) => {
+    setNewExercise(prev => ({
+      ...prev,
+      steps: prev.steps.map((step, i) => i === index ? value : step)
+    }));
+  };
+
+  const saveCustomExercise = async () => {
+    if (!user) return;
+
+    const trimmedName = newExercise.name.trim();
+    const trimmedDescription = newExercise.description.trim();
+    const filteredSteps = newExercise.steps.filter(s => s.trim() !== "");
+
+    if (!trimmedName) {
+      toast.error("Please enter an exercise name");
+      return;
+    }
+    if (!trimmedDescription) {
+      toast.error("Please enter a description");
+      return;
+    }
+    if (filteredSteps.length === 0) {
+      toast.error("Please add at least one instruction step");
+      return;
+    }
+
+    setSavingExercise(true);
+
+    try {
+      if (editingExercise) {
+        const { error } = await supabase
+          .from("custom_exercises" as any)
+          .update({
+            name: trimmedName,
+            description: trimmedDescription,
+            icon: newExercise.icon,
+            color: newExercise.color,
+            steps: filteredSteps,
+            default_duration: newExercise.default_duration,
+          })
+          .eq("id", editingExercise.id);
+
+        if (error) throw error;
+        toast.success("Exercise updated!");
+      } else {
+        const { error } = await supabase
+          .from("custom_exercises" as any)
+          .insert({
+            user_id: user.id,
+            name: trimmedName,
+            description: trimmedDescription,
+            icon: newExercise.icon,
+            color: newExercise.color,
+            steps: filteredSteps,
+            default_duration: newExercise.default_duration,
+          });
+
+        if (error) throw error;
+        toast.success("Custom exercise created!");
+      }
+
+      await fetchCustomExercises();
+      closeCreateDialog();
+    } catch (error) {
+      console.error("Error saving custom exercise:", error);
+      toast.error("Failed to save exercise");
+    } finally {
+      setSavingExercise(false);
+    }
+  };
+
+  const deleteCustomExercise = async (exerciseId: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from("custom_exercises" as any)
+        .delete()
+        .eq("id", exerciseId);
+
+      if (error) throw error;
+      toast.success("Exercise deleted");
+      await fetchCustomExercises();
+    } catch (error) {
+      console.error("Error deleting custom exercise:", error);
+      toast.error("Failed to delete exercise");
+    }
+  };
+
+  // Convert custom exercises to Exercise format
+  const allExercises: Exercise[] = [
+    ...defaultExercises,
+    ...customExercises.map((ce): Exercise => ({
+      id: ce.id,
+      name: ce.name,
+      description: ce.description,
+      suggestedDuration: ce.default_duration,
+      icon: getIconByName(ce.icon),
+      color: ce.color,
+      bgColor: getColorByValue(ce.color).bg,
+      instructions: ce.steps,
+      isCustom: true,
+    })),
+  ];
+
   const unlockedAchievements = getUnlockedAchievements();
 
   return (
@@ -416,15 +666,26 @@ export function WellnessExercises() {
             <Timer className="h-5 w-5 text-primary" />
             Wellness Exercises
           </CardTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowHistory(true)}
-            className="text-xs"
-          >
-            <History className="h-4 w-4 mr-1" />
-            History
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={openCreateDialog}
+              className="text-xs"
+            >
+              <PlusCircle className="h-4 w-4 mr-1" />
+              Create
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowHistory(true)}
+              className="text-xs"
+            >
+              <History className="h-4 w-4 mr-1" />
+              History
+            </Button>
+          </div>
         </div>
         
         {!loadingStats && user && (
@@ -443,24 +704,62 @@ export function WellnessExercises() {
         )}
       </CardHeader>
       <CardContent className="space-y-3">
-        {exercises.map((exercise) => (
-          <button
+        {allExercises.map((exercise) => (
+          <div
             key={exercise.id}
-            onClick={() => openExercise(exercise)}
-            className="w-full flex items-center gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-all hover:scale-[1.02] text-left group"
+            className="relative group"
           >
-            <div className={`p-2 rounded-lg ${exercise.bgColor}`}>
-              <exercise.icon className={`h-5 w-5 ${exercise.color}`} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm text-foreground group-hover:text-primary transition-colors">
-                {exercise.name}
-              </p>
-              <p className="text-xs text-muted-foreground truncate">
-                {exercise.description}
-              </p>
-            </div>
-          </button>
+            <button
+              onClick={() => openExercise(exercise)}
+              className="w-full flex items-center gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-all hover:scale-[1.02] text-left"
+            >
+              <div className={`p-2 rounded-lg ${exercise.bgColor}`}>
+                <exercise.icon className={`h-5 w-5 ${exercise.color}`} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="font-medium text-sm text-foreground group-hover:text-primary transition-colors">
+                    {exercise.name}
+                  </p>
+                  {exercise.isCustom && (
+                    <Badge variant="outline" className="text-[10px] px-1 py-0">
+                      Custom
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground truncate">
+                  {exercise.description}
+                </p>
+              </div>
+            </button>
+            {exercise.isCustom && (
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const customEx = customExercises.find(c => c.id === exercise.id);
+                    if (customEx) openEditDialog(customEx);
+                  }}
+                >
+                  <Edit3 className="h-3 w-3" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-destructive hover:text-destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteCustomExercise(exercise.id);
+                  }}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+          </div>
         ))}
 
         {unlockedAchievements.length > 0 && (
@@ -481,6 +780,197 @@ export function WellnessExercises() {
           </div>
         )}
       </CardContent>
+
+      {/* Create/Edit Custom Exercise Dialog */}
+      <Dialog open={showCreateDialog} onOpenChange={(open) => !open && closeCreateDialog()}>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <PlusCircle className="h-5 w-5 text-primary" />
+              {editingExercise ? "Edit Exercise" : "Create Custom Exercise"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Exercise Name</Label>
+              <Input
+                id="name"
+                placeholder="My Custom Exercise"
+                value={newExercise.name}
+                onChange={(e) => setNewExercise(prev => ({ ...prev, name: e.target.value }))}
+                maxLength={50}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                placeholder="A brief description of your exercise..."
+                value={newExercise.description}
+                onChange={(e) => setNewExercise(prev => ({ ...prev, description: e.target.value }))}
+                maxLength={100}
+                rows={2}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Icon</Label>
+              <div className="flex flex-wrap gap-2">
+                {ICON_OPTIONS.map((option) => (
+                  <button
+                    key={option.name}
+                    type="button"
+                    onClick={() => setNewExercise(prev => ({ ...prev, icon: option.name }))}
+                    className={`p-2 rounded-lg transition-all ${
+                      newExercise.icon === option.name
+                        ? "bg-primary text-primary-foreground scale-110"
+                        : "bg-muted hover:bg-muted/80"
+                    }`}
+                  >
+                    <option.icon className="h-5 w-5" />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Color</Label>
+              <div className="flex flex-wrap gap-2">
+                {COLOR_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setNewExercise(prev => ({ ...prev, color: option.value }))}
+                    className={`w-8 h-8 rounded-full transition-all ${option.bg} ${
+                      newExercise.color === option.value
+                        ? "ring-2 ring-primary ring-offset-2 scale-110"
+                        : ""
+                    }`}
+                  >
+                    <span className={`block w-full h-full rounded-full ${option.value.replace('text-', 'bg-').replace('-500', '-500')}`} 
+                      style={{ backgroundColor: option.value.includes('purple') ? '#a855f7' : 
+                        option.value.includes('blue') ? '#3b82f6' :
+                        option.value.includes('green') ? '#22c55e' :
+                        option.value.includes('orange') ? '#f97316' :
+                        option.value.includes('pink') ? '#ec4899' :
+                        option.value.includes('teal') ? '#14b8a6' :
+                        option.value.includes('red') ? '#ef4444' :
+                        option.value.includes('yellow') ? '#eab308' : '#a855f7'
+                      }}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Default Duration</Label>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  type="button"
+                  onClick={() => setNewExercise(prev => ({ 
+                    ...prev, 
+                    default_duration: Math.max(30, prev.default_duration - 30) 
+                  }))}
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <span className="text-xl font-medium w-20 text-center">
+                  {formatTime(newExercise.default_duration)}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  type="button"
+                  onClick={() => setNewExercise(prev => ({ 
+                    ...prev, 
+                    default_duration: Math.min(3600, prev.default_duration + 30) 
+                  }))}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="flex gap-2 mt-2">
+                {DURATION_PRESETS.map((preset) => (
+                  <Button
+                    key={preset.seconds}
+                    variant={newExercise.default_duration === preset.seconds ? "default" : "outline"}
+                    size="sm"
+                    type="button"
+                    onClick={() => setNewExercise(prev => ({ ...prev, default_duration: preset.seconds }))}
+                    className="text-xs"
+                  >
+                    {preset.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Instruction Steps</Label>
+              <div className="space-y-2">
+                {newExercise.steps.map((step, index) => (
+                  <div key={index} className="flex items-start gap-2">
+                    <div className="w-6 h-8 flex items-center justify-center text-xs font-medium text-muted-foreground">
+                      {index + 1}.
+                    </div>
+                    <Input
+                      placeholder={`Step ${index + 1}...`}
+                      value={step}
+                      onChange={(e) => updateStep(index, e.target.value)}
+                      maxLength={100}
+                    />
+                    {newExercise.steps.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        type="button"
+                        onClick={() => removeStep(index)}
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {newExercise.steps.length < 10 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  onClick={addStep}
+                  className="w-full mt-2"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Step
+                </Button>
+              )}
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={closeCreateDialog}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={saveCustomExercise}
+                disabled={savingExercise}
+                className="flex-1"
+              >
+                {savingExercise ? "Saving..." : (editingExercise ? "Update" : "Create")}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Exercise Dialog */}
       <Dialog open={!!selectedExercise} onOpenChange={(open) => !open && closeExercise()}>
