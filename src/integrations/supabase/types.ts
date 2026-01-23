@@ -44,6 +44,69 @@ export type Database = {
         }
         Relationships: []
       }
+      journal_entries: {
+        Row: {
+          ai_analysis: Json | null
+          content: string
+          created_at: string
+          id: string
+          mood: string | null
+          sentiment: number | null
+          stress_level: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_analysis?: Json | null
+          content: string
+          created_at?: string
+          id?: string
+          mood?: string | null
+          sentiment?: number | null
+          stress_level?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_analysis?: Json | null
+          content?: string
+          created_at?: string
+          id?: string
+          mood?: string | null
+          sentiment?: number | null
+          stress_level?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mood_entries: {
+        Row: {
+          created_at: string
+          entry_date: string
+          id: string
+          mood: string
+          mood_value: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          entry_date?: string
+          id?: string
+          mood: string
+          mood_value: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          entry_date?: string
+          id?: string
+          mood?: string
+          mood_value?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
