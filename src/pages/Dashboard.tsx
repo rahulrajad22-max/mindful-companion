@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Navbar } from "@/components/Navbar";
 import { MoodSelector } from "@/components/MoodSelector";
 import { MoodChart } from "@/components/MoodChart";
+import { MoodCalendar } from "@/components/MoodCalendar";
 import { SentimentTrendsChart } from "@/components/SentimentTrendsChart";
 import { JournalEntry } from "@/components/JournalEntry";
 import { InsightCard } from "@/components/InsightCard";
@@ -140,8 +141,13 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* Mood Chart */}
+            {/* Mood Calendar */}
             <div className="animate-fade-up" style={{ animationDelay: "400ms" }}>
+              <MoodCalendar />
+            </div>
+
+            {/* Mood Chart */}
+            <div className="animate-fade-up" style={{ animationDelay: "500ms" }}>
               <MoodChart 
                 data={moodData} 
                 timeRange={moodTimeRange}
