@@ -10,84 +10,66 @@ import { WeeklyWellnessSummary } from "@/components/WeeklyWellnessSummary";
 import { WellnessExercises } from "@/components/WellnessExercises";
 import { QuickResources } from "@/components/QuickResources";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar } from "lucide-react";
+import { Calendar, Loader2 } from "lucide-react";
 import { TimeRange } from "@/components/TimeRangeToggle";
+import { useMoodEntries } from "@/hooks/useMoodEntries";
+import { useJournalEntries } from "@/hooks/useJournalEntries";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 type MoodLevel = "great" | "good" | "okay" | "low" | "bad";
 
-const moodToNumber: Record<MoodLevel, number> = {
-  great: 5,
-  good: 4,
-  okay: 3,
-  low: 2,
-  bad: 1,
-};
-
-// Sample weekly data for the mood chart
-const weeklyMoodData = [
-  { date: "Mon", mood: 4, label: "Good" },
-  { date: "Tue", mood: 3, label: "Okay" },
-  { date: "Wed", mood: 4, label: "Good" },
-  { date: "Thu", mood: 5, label: "Great" },
-  { date: "Fri", mood: 4, label: "Good" },
-  { date: "Sat", mood: 3, label: "Okay" },
-  { date: "Sun", mood: 4, label: "Good" },
-];
-
-// Sample monthly data for the mood chart
-const monthlyMoodData = [
-  { date: "Week 1", mood: 3, label: "Okay" },
-  { date: "Week 2", mood: 4, label: "Good" },
-  { date: "Week 3", mood: 3, label: "Okay" },
-  { date: "Week 4", mood: 5, label: "Great" },
-];
-
-// Sample weekly sentiment data from journal analysis
-const weeklySentimentData = [
-  { date: "Mon", sentiment: 0.3, stressLevel: 45, mood: 4 },
-  { date: "Tue", sentiment: -0.1, stressLevel: 62, mood: 3 },
-  { date: "Wed", sentiment: 0.5, stressLevel: 38, mood: 4 },
-  { date: "Thu", sentiment: 0.7, stressLevel: 25, mood: 5 },
-  { date: "Fri", sentiment: 0.4, stressLevel: 42, mood: 4 },
-  { date: "Sat", sentiment: 0.1, stressLevel: 55, mood: 3 },
-  { date: "Sun", sentiment: 0.6, stressLevel: 30, mood: 4 },
-];
-
-// Sample monthly sentiment data
-const monthlySentimentData = [
-  { date: "Week 1", sentiment: 0.2, stressLevel: 52, mood: 3 },
-  { date: "Week 2", sentiment: 0.4, stressLevel: 40, mood: 4 },
-  { date: "Week 3", sentiment: 0.1, stressLevel: 58, mood: 3 },
-  { date: "Week 4", sentiment: 0.6, stressLevel: 32, mood: 5 },
-];
-
 export default function Dashboard() {
-  const [selectedMood, setSelectedMood] = useState<MoodLevel>();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [moodTimeRange, setMoodTimeRange] = useState<TimeRange>("weekly");
   const [sentimentTimeRange, setSentimentTimeRange] = useState<TimeRange>("weekly");
+  
+  const { 
+    loading: moodLoading, 
+    todaysMood, 
+    weeklyData: weeklyMoodData, 
+    monthlyData: monthlyMoodData, 
+    saveMood 
+  } = useMoodEntries();
+  
+  const { 
+    weeklySentimentData, 
+    monthlySentimentData 
+  } = useJournalEntries();
+  
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
   const moodData = useMemo(() => 
     moodTimeRange === "weekly" ? weeklyMoodData : monthlyMoodData, 
-    [moodTimeRange]
+    [moodTimeRange, weeklyMoodData, monthlyMoodData]
   );
 
   const sentimentData = useMemo(() => 
     sentimentTimeRange === "weekly" ? weeklySentimentData : monthlySentimentData, 
-    [sentimentTimeRange]
+    [sentimentTimeRange, weeklySentimentData, monthlySentimentData]
   );
 
-  const handleMoodSelect = (mood: MoodLevel) => {
-    setSelectedMood(mood);
-    // In a real app, this would save to the database
+  const handleMoodSelect = async (mood: MoodLevel) => {
+    try {
+      await saveMood(mood);
+      toast({
+        title: "Mood logged",
+        description: "Your mood has been saved successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save mood. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleJournalSave = (entry: string) => {
     setIsAnalyzing(true);
-    // Simulate AI analysis
-    setTimeout(() => {
-      setIsAnalyzing(false);
-    }, 2000);
+    // Navigate to journal page for full experience
+    navigate("/journal");
   };
 
   const today = new Date().toLocaleDateString("en-US", {
@@ -122,16 +104,24 @@ export default function Dashboard() {
             {/* Mood Selector Card */}
             <Card className="gradient-card border-border/30 animate-fade-up" style={{ animationDelay: "100ms" }}>
               <CardContent className="p-6">
-                <MoodSelector 
-                  selectedMood={selectedMood}
-                  onMoodSelect={handleMoodSelect}
-                />
-                {selectedMood && (
-                  <div className="mt-4 p-4 rounded-xl bg-primary-soft text-center animate-scale-in">
-                    <p className="text-sm text-primary">
-                      Thanks for sharing! Your mood has been logged.
-                    </p>
+                {moodLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                   </div>
+                ) : (
+                  <>
+                    <MoodSelector 
+                      selectedMood={todaysMood}
+                      onMoodSelect={handleMoodSelect}
+                    />
+                    {todaysMood && (
+                      <div className="mt-4 p-4 rounded-xl bg-primary-soft text-center animate-scale-in">
+                        <p className="text-sm text-primary">
+                          Thanks for sharing! Your mood has been logged.
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -176,26 +166,39 @@ export default function Dashboard() {
             <div className="space-y-4 animate-fade-up" style={{ animationDelay: "250ms" }}>
               <h3 className="font-display text-lg font-semibold text-foreground">AI Insights</h3>
               
-              <InsightCard
-                type="sentiment"
-                title="Positive Trend"
-                description="Your journal entries show an upward trend in positivity this week. Keep it up!"
-                level="positive"
-              />
-              
-              <InsightCard
-                type="suggestion"
-                title="Self-Care Tip"
-                description="Try a 5-minute breathing exercise today. It can help maintain your positive momentum."
-                level="neutral"
-              />
-              
-              <InsightCard
-                type="pattern"
-                title="Pattern Detected"
-                description="You tend to feel better on days when you exercise. Consider morning walks."
-                level="neutral"
-              />
+              {moodData.length > 0 ? (
+                <>
+                  <InsightCard
+                    type="sentiment"
+                    title="Mood Tracking Active"
+                    description={`You've logged ${moodData.length} mood entries recently. Keep tracking to see patterns!`}
+                    level="positive"
+                  />
+                  
+                  <InsightCard
+                    type="suggestion"
+                    title="Self-Care Tip"
+                    description="Try a 5-minute breathing exercise today. It can help maintain your positive momentum."
+                    level="neutral"
+                  />
+                </>
+              ) : (
+                <>
+                  <InsightCard
+                    type="suggestion"
+                    title="Start Tracking"
+                    description="Log your first mood to start seeing personalized insights and patterns."
+                    level="neutral"
+                  />
+                  
+                  <InsightCard
+                    type="pattern"
+                    title="Build Your Habit"
+                    description="Regular mood tracking helps identify patterns in your emotional well-being."
+                    level="neutral"
+                  />
+                </>
+              )}
             </div>
 
             {/* Wellness Exercises */}

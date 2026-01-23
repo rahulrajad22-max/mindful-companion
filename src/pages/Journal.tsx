@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AIAnalysisCard, JournalAnalysis } from "@/components/AIAnalysisCard";
 import { useJournalAnalysis } from "@/hooks/useJournalAnalysis";
+import { useJournalEntries } from "@/hooks/useJournalEntries";
 import { useToast } from "@/hooks/use-toast";
 import { 
   BookOpen, 
@@ -12,46 +13,10 @@ import {
   Send, 
   Clock,
   ChevronRight,
-  Brain
+  Brain,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-interface JournalEntryData {
-  id: string;
-  date: string;
-  time: string;
-  content: string;
-  mood: string;
-  sentiment: "positive" | "neutral" | "negative" | "mixed";
-  analysis?: JournalAnalysis;
-}
-
-const sampleEntries: JournalEntryData[] = [
-  {
-    id: "1",
-    date: "Today",
-    time: "9:30 AM",
-    content: "Started the morning with a meditation session. Feeling centered and ready for the day ahead. Had a good conversation with a friend which lifted my spirits.",
-    mood: "😊",
-    sentiment: "positive",
-  },
-  {
-    id: "2",
-    date: "Yesterday",
-    time: "8:15 PM",
-    content: "Work was challenging today but I managed to complete all my tasks. Feeling a bit tired but accomplished. Need to remember to take more breaks.",
-    mood: "🙂",
-    sentiment: "neutral",
-  },
-  {
-    id: "3",
-    date: "2 days ago",
-    time: "7:00 PM",
-    content: "Had some anxiety about the upcoming presentation but practiced deep breathing which helped. Went for a walk in the evening which cleared my mind.",
-    mood: "😐",
-    sentiment: "neutral",
-  },
-];
 
 const journalPrompts = [
   "What are three things you're grateful for today?",
@@ -63,9 +28,9 @@ const journalPrompts = [
 
 export default function Journal() {
   const [newEntry, setNewEntry] = useState("");
-  const [entries, setEntries] = useState(sampleEntries);
   const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
-  const { analysis, isLoading, error, analyzeEntry, clearAnalysis } = useJournalAnalysis();
+  const { analysis, isLoading: isAnalyzing, error, analyzeEntry, clearAnalysis } = useJournalAnalysis();
+  const { loading, entries, stats, saveEntry, refetch } = useJournalEntries();
   const { toast } = useToast();
 
   const handleSave = async () => {
@@ -74,27 +39,25 @@ export default function Journal() {
     // Analyze the entry with AI
     const result = await analyzeEntry(newEntry);
 
-    const newEntryData: JournalEntryData = {
-      id: Date.now().toString(),
-      date: "Just now",
-      time: new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
-      content: newEntry,
-      mood: result?.sentiment === "positive" ? "😊" : result?.sentiment === "negative" ? "😔" : "🙂",
-      sentiment: result?.sentiment || "neutral",
-      analysis: result || undefined,
-    };
+    try {
+      await saveEntry(newEntry, result || undefined);
+      
+      toast({
+        title: "Entry saved",
+        description: result 
+          ? "Your journal entry has been analyzed and saved." 
+          : "Your entry was saved but analysis failed.",
+      });
 
-    setEntries([newEntryData, ...entries]);
-    
-    toast({
-      title: "Entry saved",
-      description: result 
-        ? "Your journal entry has been analyzed and saved." 
-        : "Your entry was saved but analysis failed.",
-    });
-
-    setNewEntry("");
-    setSelectedPrompt(null);
+      setNewEntry("");
+      setSelectedPrompt(null);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save entry. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const usePrompt = (prompt: string) => {
@@ -131,7 +94,7 @@ export default function Journal() {
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <Sparkles className="h-5 w-5 text-primary" />
                   New Entry
-                  {isLoading && (
+                  {isAnalyzing && (
                     <span className="text-xs text-muted-foreground font-normal ml-auto flex items-center gap-1">
                       <Brain className="h-3 w-3 animate-pulse" />
                       AI is analyzing...
@@ -148,7 +111,7 @@ export default function Journal() {
                     if (analysis) clearAnalysis();
                   }}
                   className="min-h-[200px] resize-none rounded-xl border-border/50 bg-background/50 focus:border-primary/50 focus:ring-primary/20 text-base leading-relaxed"
-                  disabled={isLoading}
+                  disabled={isAnalyzing}
                 />
                 <div className="flex justify-between items-center">
                   <p className="text-xs text-muted-foreground">
@@ -156,10 +119,10 @@ export default function Journal() {
                   </p>
                   <Button 
                     onClick={handleSave} 
-                    disabled={!newEntry.trim() || isLoading} 
+                    disabled={!newEntry.trim() || isAnalyzing} 
                     className="gap-2"
                   >
-                    {isLoading ? (
+                    {isAnalyzing ? (
                       <>
                         <Brain className="h-4 w-4 animate-pulse" />
                         Analyzing...
@@ -179,7 +142,7 @@ export default function Journal() {
             <div className="animate-fade-up" style={{ animationDelay: "100ms" }}>
               <AIAnalysisCard 
                 analysis={analysis} 
-                isLoading={isLoading} 
+                isLoading={isAnalyzing} 
                 error={error} 
               />
             </div>
@@ -191,40 +154,55 @@ export default function Journal() {
                 Recent Entries
               </h2>
 
-              {entries.map((entry, index) => (
-                <Card 
-                  key={entry.id} 
-                  className="border-border/30 hover:border-primary/20 transition-all cursor-pointer group"
-                  style={{ animationDelay: `${(index + 1) * 100}ms` }}
-                >
-                  <CardContent className="p-5">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{entry.mood}</span>
-                        <div>
-                          <p className="font-medium text-foreground">{entry.date}</p>
-                          <p className="text-xs text-muted-foreground">{entry.time}</p>
-                        </div>
-                      </div>
-                      <div className={cn(
-                        "px-2 py-1 rounded-full text-xs font-medium",
-                        entry.sentiment === "positive" && "bg-mood-great/20 text-mood-great",
-                        entry.sentiment === "neutral" && "bg-primary/10 text-primary",
-                        entry.sentiment === "negative" && "bg-mood-low/20 text-mood-low",
-                        entry.sentiment === "mixed" && "bg-secondary/50 text-secondary-foreground"
-                      )}>
-                        {entry.sentiment}
-                      </div>
-                    </div>
-                    <p className="text-muted-foreground leading-relaxed line-clamp-3">
-                      {entry.content}
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : entries.length === 0 ? (
+                <Card className="border-border/30">
+                  <CardContent className="py-12 text-center">
+                    <BookOpen className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+                    <p className="text-muted-foreground">
+                      No journal entries yet. Start writing to see your entries here!
                     </p>
-                    <div className="mt-3 flex items-center text-xs text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                      Read more <ChevronRight className="h-3 w-3" />
-                    </div>
                   </CardContent>
                 </Card>
-              ))}
+              ) : (
+                entries.map((entry, index) => (
+                  <Card 
+                    key={entry.id} 
+                    className="border-border/30 hover:border-primary/20 transition-all cursor-pointer group"
+                    style={{ animationDelay: `${(index + 1) * 100}ms` }}
+                  >
+                    <CardContent className="p-5">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl">{entry.mood}</span>
+                          <div>
+                            <p className="font-medium text-foreground">{entry.date}</p>
+                            <p className="text-xs text-muted-foreground">{entry.time}</p>
+                          </div>
+                        </div>
+                        <div className={cn(
+                          "px-2 py-1 rounded-full text-xs font-medium",
+                          entry.sentiment === "positive" && "bg-mood-great/20 text-mood-great",
+                          entry.sentiment === "neutral" && "bg-primary/10 text-primary",
+                          entry.sentiment === "negative" && "bg-mood-low/20 text-mood-low",
+                          entry.sentiment === "mixed" && "bg-secondary/50 text-secondary-foreground"
+                        )}>
+                          {entry.sentiment}
+                        </div>
+                      </div>
+                      <p className="text-muted-foreground leading-relaxed line-clamp-3">
+                        {entry.content}
+                      </p>
+                      <div className="mt-3 flex items-center text-xs text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                        Read more <ChevronRight className="h-3 w-3" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </div>
 
@@ -248,7 +226,7 @@ export default function Journal() {
                       selectedPrompt === prompt && "bg-primary-soft border border-primary/30"
                     )}
                     onClick={() => usePrompt(prompt)}
-                    disabled={isLoading}
+                    disabled={isAnalyzing}
                   >
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       {prompt}
@@ -266,15 +244,15 @@ export default function Journal() {
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Total entries</span>
-                  <span className="font-display text-xl font-bold text-foreground">{entries.length}</span>
+                  <span className="font-display text-xl font-bold text-foreground">{stats.totalEntries}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">This week</span>
-                  <span className="font-display text-xl font-bold text-primary">3</span>
+                  <span className="font-display text-xl font-bold text-primary">{stats.thisWeek}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Streak</span>
-                  <span className="font-display text-xl font-bold text-mood-great">5 days</span>
+                  <span className="font-display text-xl font-bold text-mood-great">{stats.streak} day{stats.streak !== 1 ? 's' : ''}</span>
                 </div>
               </CardContent>
             </Card>
