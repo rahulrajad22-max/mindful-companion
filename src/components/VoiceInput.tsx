@@ -1,9 +1,8 @@
-import { useState, useCallback } from "react";
-import { useScribe } from "@elevenlabs/react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 interface VoiceInputProps {
   onTranscript: (text: string) => void;
@@ -11,98 +10,146 @@ interface VoiceInputProps {
   className?: string;
 }
 
+// Extend window for speech recognition
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+  resultIndex: number;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+  message?: string;
+}
+
 export function VoiceInput({ onTranscript, disabled, className }: VoiceInputProps) {
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [isSupported, setIsSupported] = useState(true);
+  const [partialTranscript, setPartialTranscript] = useState("");
+  const recognitionRef = useRef<any>(null);
+  const { toast } = useToast();
 
-  const scribe = useScribe({
-    modelId: "scribe_v2_realtime",
-    onPartialTranscript: (data) => {
-      console.log("Partial transcript:", data.text);
-    },
-    onCommittedTranscript: (data) => {
-      console.log("Committed transcript:", data.text);
-      if (data.text.trim()) {
-        onTranscript(data.text);
-      }
-    },
-  });
-
-  const handleToggle = useCallback(async () => {
-    setError(null);
-
-    if (scribe.isConnected) {
-      scribe.disconnect();
+  useEffect(() => {
+    // Check for browser support
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setIsSupported(false);
       return;
     }
 
-    setIsConnecting(true);
-    try {
-      const { data, error: fnError } = await supabase.functions.invoke(
-        "elevenlabs-scribe-token"
-      );
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
 
-      if (fnError) {
-        console.error("Error getting scribe token:", fnError);
-        throw new Error("Failed to get voice token");
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let interimTranscript = '';
+      let finalTranscript = '';
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+        } else {
+          interimTranscript += transcript;
+        }
       }
 
-      if (!data?.token) {
-        throw new Error("No token received");
-      }
+      setPartialTranscript(interimTranscript);
 
-      await scribe.connect({
-        token: data.token,
-        microphone: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      });
-    } catch (err) {
-      console.error("Voice input error:", err);
-      setError(err instanceof Error ? err.message : "Failed to start voice input");
-    } finally {
-      setIsConnecting(false);
+      if (finalTranscript) {
+        onTranscript(finalTranscript);
+        setPartialTranscript("");
+      }
+    };
+
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      console.error('Speech recognition error:', event.error);
+      setIsListening(false);
+      setPartialTranscript("");
+      
+      if (event.error === 'not-allowed') {
+        toast({
+          title: "Microphone access denied",
+          description: "Please allow microphone access to use voice input.",
+          variant: "destructive",
+        });
+      } else if (event.error !== 'aborted') {
+        toast({
+          title: "Voice input error",
+          description: "Something went wrong. Please try again.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      setPartialTranscript("");
+    };
+
+    recognitionRef.current = recognition;
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+      }
+    };
+  }, [onTranscript, toast]);
+
+  const handleToggle = useCallback(() => {
+    if (!recognitionRef.current) return;
+
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+      setPartialTranscript("");
+    } else {
+      try {
+        recognitionRef.current.start();
+        setIsListening(true);
+      } catch (error) {
+        console.error('Failed to start recognition:', error);
+        toast({
+          title: "Could not start voice input",
+          description: "Please try again.",
+          variant: "destructive",
+        });
+      }
     }
-  }, [scribe]);
+  }, [isListening, toast]);
 
-  const isActive = scribe.isConnected;
+  if (!isSupported) {
+    return null; // Don't render anything if not supported
+  }
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <Button
         type="button"
-        variant={isActive ? "destructive" : "outline"}
+        variant={isListening ? "destructive" : "outline"}
         size="icon"
         onClick={handleToggle}
-        disabled={disabled || isConnecting}
+        disabled={disabled}
         className={cn(
           "relative transition-all",
-          isActive && "animate-pulse"
+          isListening && "animate-pulse"
         )}
-        title={isActive ? "Stop recording" : "Start voice input"}
+        title={isListening ? "Stop recording" : "Start voice input"}
       >
-        {isConnecting ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : isActive ? (
+        {isListening ? (
           <MicOff className="h-4 w-4" />
         ) : (
           <Mic className="h-4 w-4" />
         )}
-        {isActive && (
+        {isListening && (
           <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 animate-pulse" />
         )}
       </Button>
       
-      {isActive && scribe.partialTranscript && (
+      {isListening && partialTranscript && (
         <span className="text-xs text-muted-foreground italic max-w-[200px] truncate">
-          {scribe.partialTranscript}
+          {partialTranscript}
         </span>
-      )}
-      
-      {error && (
-        <span className="text-xs text-destructive">{error}</span>
       )}
     </div>
   );
