@@ -1,14 +1,35 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Loader2 } from "lucide-react";
+import { Mic, MicOff, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface VoiceInputProps {
   onTranscript: (text: string) => void;
   disabled?: boolean;
   className?: string;
 }
+
+const LANGUAGES = [
+  { code: 'en-US', name: 'English (US)', flag: '🇺🇸' },
+  { code: 'en-GB', name: 'English (UK)', flag: '🇬🇧' },
+  { code: 'es-ES', name: 'Spanish', flag: '🇪🇸' },
+  { code: 'fr-FR', name: 'French', flag: '🇫🇷' },
+  { code: 'de-DE', name: 'German', flag: '🇩🇪' },
+  { code: 'it-IT', name: 'Italian', flag: '🇮🇹' },
+  { code: 'pt-BR', name: 'Portuguese (BR)', flag: '🇧🇷' },
+  { code: 'zh-CN', name: 'Chinese (Mandarin)', flag: '🇨🇳' },
+  { code: 'ja-JP', name: 'Japanese', flag: '🇯🇵' },
+  { code: 'ko-KR', name: 'Korean', flag: '🇰🇷' },
+  { code: 'hi-IN', name: 'Hindi', flag: '🇮🇳' },
+  { code: 'ar-SA', name: 'Arabic', flag: '🇸🇦' },
+];
 
 // Extend window for speech recognition
 interface SpeechRecognitionEvent extends Event {
@@ -25,6 +46,7 @@ export function VoiceInput({ onTranscript, disabled, className }: VoiceInputProp
   const [isListening, setIsListening] = useState(false);
   const [isSupported, setIsSupported] = useState(true);
   const [partialTranscript, setPartialTranscript] = useState("");
+  const [selectedLanguage, setSelectedLanguage] = useState(LANGUAGES[0]);
   const recognitionRef = useRef<any>(null);
   const { toast } = useToast();
 
@@ -39,7 +61,7 @@ export function VoiceInput({ onTranscript, disabled, className }: VoiceInputProp
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = 'en-US';
+    recognition.lang = selectedLanguage.code;
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       let interimTranscript = '';
@@ -94,7 +116,7 @@ export function VoiceInput({ onTranscript, disabled, className }: VoiceInputProp
         recognitionRef.current.abort();
       }
     };
-  }, [onTranscript, toast]);
+  }, [onTranscript, toast, selectedLanguage]);
 
   const handleToggle = useCallback(() => {
     if (!recognitionRef.current) return;
@@ -118,12 +140,54 @@ export function VoiceInput({ onTranscript, disabled, className }: VoiceInputProp
     }
   }, [isListening, toast]);
 
+  const handleLanguageChange = (language: typeof LANGUAGES[0]) => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+    }
+    setSelectedLanguage(language);
+    toast({
+      title: "Language changed",
+      description: `Voice input now set to ${language.name}`,
+    });
+  };
+
   if (!isSupported) {
     return null; // Don't render anything if not supported
   }
 
   return (
-    <div className={cn("flex items-center gap-2", className)}>
+    <div className={cn("flex items-center gap-1", className)}>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            disabled={disabled || isListening}
+            className="h-9 w-9"
+            title="Select language"
+          >
+            <span className="text-base">{selectedLanguage.flag}</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="max-h-[300px] overflow-y-auto bg-popover z-50">
+          {LANGUAGES.map((language) => (
+            <DropdownMenuItem
+              key={language.code}
+              onClick={() => handleLanguageChange(language)}
+              className={cn(
+                "flex items-center gap-2 cursor-pointer",
+                selectedLanguage.code === language.code && "bg-primary/10"
+              )}
+            >
+              <span>{language.flag}</span>
+              <span>{language.name}</span>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
       <Button
         type="button"
         variant={isListening ? "destructive" : "outline"}
@@ -131,7 +195,7 @@ export function VoiceInput({ onTranscript, disabled, className }: VoiceInputProp
         onClick={handleToggle}
         disabled={disabled}
         className={cn(
-          "relative transition-all",
+          "relative transition-all h-9 w-9",
           isListening && "animate-pulse"
         )}
         title={isListening ? "Stop recording" : "Start voice input"}
