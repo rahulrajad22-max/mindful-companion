@@ -17,18 +17,18 @@ interface VoiceInputProps {
 }
 
 const LANGUAGES = [
-  { code: 'en-US', name: 'English (US)', flag: '🇺🇸' },
-  { code: 'en-GB', name: 'English (UK)', flag: '🇬🇧' },
-  { code: 'es-ES', name: 'Spanish', flag: '🇪🇸' },
-  { code: 'fr-FR', name: 'French', flag: '🇫🇷' },
-  { code: 'de-DE', name: 'German', flag: '🇩🇪' },
-  { code: 'it-IT', name: 'Italian', flag: '🇮🇹' },
-  { code: 'pt-BR', name: 'Portuguese (BR)', flag: '🇧🇷' },
-  { code: 'zh-CN', name: 'Chinese (Mandarin)', flag: '🇨🇳' },
-  { code: 'ja-JP', name: 'Japanese', flag: '🇯🇵' },
-  { code: 'ko-KR', name: 'Korean', flag: '🇰🇷' },
+  { code: 'en-IN', name: 'English (India)', flag: '🇮🇳' },
   { code: 'hi-IN', name: 'Hindi', flag: '🇮🇳' },
-  { code: 'ar-SA', name: 'Arabic', flag: '🇸🇦' },
+  { code: 'bn-IN', name: 'Bengali', flag: '🇮🇳' },
+  { code: 'te-IN', name: 'Telugu', flag: '🇮🇳' },
+  { code: 'mr-IN', name: 'Marathi', flag: '🇮🇳' },
+  { code: 'ta-IN', name: 'Tamil', flag: '🇮🇳' },
+  { code: 'gu-IN', name: 'Gujarati', flag: '🇮🇳' },
+  { code: 'kn-IN', name: 'Kannada', flag: '🇮🇳' },
+  { code: 'ml-IN', name: 'Malayalam', flag: '🇮🇳' },
+  { code: 'pa-IN', name: 'Punjabi', flag: '🇮🇳' },
+  { code: 'or-IN', name: 'Odia', flag: '🇮🇳' },
+  { code: 'as-IN', name: 'Assamese', flag: '🇮🇳' },
 ];
 
 // Extend window for speech recognition
