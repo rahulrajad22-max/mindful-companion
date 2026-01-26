@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { VoiceInput } from "@/components/VoiceInput";
 import { Sparkles, Send } from "lucide-react";
 
 interface JournalEntryProps {
@@ -17,6 +18,10 @@ export function JournalEntry({ onSave, isAnalyzing }: JournalEntryProps) {
       onSave(entry);
       setEntry("");
     }
+  };
+
+  const handleVoiceTranscript = (text: string) => {
+    setEntry((prev) => prev + (prev ? " " : "") + text);
   };
 
   return (
@@ -35,9 +40,15 @@ export function JournalEntry({ onSave, isAnalyzing }: JournalEntryProps) {
           className="min-h-[150px] resize-none rounded-xl border-border/50 bg-background/50 focus:border-primary/50 focus:ring-primary/20"
         />
         <div className="flex justify-between items-center">
-          <p className="text-xs text-muted-foreground">
-            Your entries are private and secure
-          </p>
+          <div className="flex items-center gap-3">
+            <VoiceInput 
+              onTranscript={handleVoiceTranscript} 
+              disabled={isAnalyzing}
+            />
+            <p className="text-xs text-muted-foreground">
+              Your entries are private and secure
+            </p>
+          </div>
           <Button 
             onClick={handleSave} 
             disabled={!entry.trim() || isAnalyzing}

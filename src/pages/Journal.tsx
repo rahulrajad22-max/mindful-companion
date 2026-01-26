@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AIAnalysisCard, JournalAnalysis } from "@/components/AIAnalysisCard";
+import { VoiceInput } from "@/components/VoiceInput";
 import { useJournalAnalysis } from "@/hooks/useJournalAnalysis";
 import { useJournalEntries } from "@/hooks/useJournalEntries";
 import { useToast } from "@/hooks/use-toast";
@@ -60,6 +61,11 @@ export default function Journal() {
     }
   };
 
+  const handleVoiceTranscript = (text: string) => {
+    setNewEntry((prev) => prev + (prev ? " " : "") + text);
+    if (analysis) clearAnalysis();
+  };
+
   const usePrompt = (prompt: string) => {
     setSelectedPrompt(prompt);
     setNewEntry(`${prompt}\n\n`);
@@ -114,9 +120,15 @@ export default function Journal() {
                   disabled={isAnalyzing}
                 />
                 <div className="flex justify-between items-center">
-                  <p className="text-xs text-muted-foreground">
-                    {newEntry.length} characters • AI will analyze your entry
-                  </p>
+                  <div className="flex items-center gap-3">
+                    <VoiceInput 
+                      onTranscript={handleVoiceTranscript} 
+                      disabled={isAnalyzing}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {newEntry.length} characters • AI will analyze your entry
+                    </p>
+                  </div>
                   <Button 
                     onClick={handleSave} 
                     disabled={!newEntry.trim() || isAnalyzing} 
