@@ -153,11 +153,11 @@ export function VoiceInput({ onTranscript, disabled, className }: VoiceInputProp
   };
 
   if (!isSupported) {
-    return null; // Don't render anything if not supported
+    return null;
   }
 
   return (
-    <div className={cn("flex items-center gap-1", className)}>
+    <div className={cn("flex items-center gap-2", className)}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -209,12 +209,40 @@ export function VoiceInput({ onTranscript, disabled, className }: VoiceInputProp
           <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 animate-pulse" />
         )}
       </Button>
+
+      {/* Waveform Animation */}
+      {isListening && (
+        <div className="flex items-center gap-[3px] h-6 px-2">
+          {[...Array(5)].map((_, i) => (
+            <span
+              key={i}
+              className="w-1 bg-destructive rounded-full"
+              style={{
+                animation: `waveform 0.8s ease-in-out infinite`,
+                animationDelay: `${i * 0.1}s`,
+                height: '100%',
+              }}
+            />
+          ))}
+        </div>
+      )}
       
       {isListening && partialTranscript && (
-        <span className="text-xs text-muted-foreground italic max-w-[200px] truncate">
+        <span className="text-xs text-muted-foreground italic max-w-[150px] truncate">
           {partialTranscript}
         </span>
       )}
+
+      <style>{`
+        @keyframes waveform {
+          0%, 100% {
+            transform: scaleY(0.3);
+          }
+          50% {
+            transform: scaleY(1);
+          }
+        }
+      `}</style>
     </div>
   );
 }
