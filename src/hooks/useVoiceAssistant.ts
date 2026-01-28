@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 export interface VoiceLanguage {
   code: string;
@@ -37,19 +37,37 @@ export function useVoiceAssistant(): UseVoiceAssistantReturn {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<VoiceLanguage>(VOICE_LANGUAGES[0]);
+  const [voicesLoaded, setVoicesLoaded] = useState(false);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioQueueRef = useRef<string[]>([]);
   const isProcessingQueueRef = useRef(false);
 
+  // Preload browser voices on mount
+  useEffect(() => {
+    if ('speechSynthesis' in window) {
+      const loadVoices = () => {
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length > 0) {
+          setVoicesLoaded(true);
+        }
+      };
+      
+      loadVoices();
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+      
+      return () => {
+        window.speechSynthesis.onvoiceschanged = null;
+      };
+    }
+  }, []);
+
   const stop = useCallback(() => {
-    // Stop HTML5 audio if playing
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
       audioRef.current = null;
     }
-    // Stop Web Speech API if speaking
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
@@ -59,13 +77,17 @@ export function useVoiceAssistant(): UseVoiceAssistantReturn {
     setIsLoading(false);
   }, []);
 
-  // Fallback to browser's Web Speech API
+  // Browser's Web Speech API (always available fallback)
   const speakWithBrowserTTS = useCallback((text: string): Promise<void> => {
     return new Promise((resolve, reject) => {
       if (!('speechSynthesis' in window)) {
-        reject(new Error('Web Speech API not supported'));
+        console.warn('Web Speech API not supported');
+        resolve(); // Don't reject, just continue silently
         return;
       }
+
+      // Cancel any ongoing speech first
+      window.speechSynthesis.cancel();
 
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = selectedLanguage.code;
@@ -73,73 +95,46 @@ export function useVoiceAssistant(): UseVoiceAssistantReturn {
       utterance.pitch = 1;
       utterance.volume = 1;
 
-      // Try to find a voice matching the selected language
+      // Try to find a matching voice
       const voices = window.speechSynthesis.getVoices();
-      const matchingVoice = voices.find(voice => 
-        voice.lang.startsWith(selectedLanguage.code.split('-')[0])
-      );
+      const langCode = selectedLanguage.code.split('-')[0];
+      
+      // First try exact match, then partial match, then any English voice
+      let matchingVoice = voices.find(v => v.lang === selectedLanguage.code);
+      if (!matchingVoice) {
+        matchingVoice = voices.find(v => v.lang.startsWith(langCode));
+      }
+      if (!matchingVoice) {
+        matchingVoice = voices.find(v => v.lang.startsWith('en'));
+      }
+      
       if (matchingVoice) {
         utterance.voice = matchingVoice;
       }
 
       utterance.onend = () => resolve();
-      utterance.onerror = (e) => reject(e);
+      utterance.onerror = (e) => {
+        console.warn('Browser TTS error:', e);
+        resolve(); // Don't reject, just continue
+      };
+
+      // Chrome bug workaround: resume synthesis if it gets stuck
+      const resumeInfinity = () => {
+        window.speechSynthesis.pause();
+        window.speechSynthesis.resume();
+      };
+      const timeout = setTimeout(resumeInfinity, 10000);
+
+      utterance.onend = () => {
+        clearTimeout(timeout);
+        resolve();
+      };
 
       window.speechSynthesis.speak(utterance);
     });
   }, [selectedLanguage.code]);
 
-  // Try ElevenLabs first, fallback to browser TTS
-  const speakWithElevenLabs = useCallback(async (text: string): Promise<boolean> => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({ 
-            text, 
-            language: selectedLanguage.code 
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        console.warn('ElevenLabs TTS failed, using browser fallback');
-        return false;
-      }
-
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-      
-      await new Promise<void>((resolve, reject) => {
-        const audio = new Audio(audioUrl);
-        audioRef.current = audio;
-        
-        audio.onended = () => {
-          URL.revokeObjectURL(audioUrl);
-          resolve();
-        };
-        
-        audio.onerror = (e) => {
-          URL.revokeObjectURL(audioUrl);
-          reject(e);
-        };
-        
-        audio.play().catch(reject);
-      });
-
-      return true;
-    } catch (error) {
-      console.warn('ElevenLabs error, using browser fallback:', error);
-      return false;
-    }
-  }, [selectedLanguage.code]);
-
+  // Skip ElevenLabs entirely - use browser TTS only (ElevenLabs free tier is blocked)
   const processQueue = useCallback(async () => {
     if (isProcessingQueueRef.current || audioQueueRef.current.length === 0) {
       return;
@@ -155,13 +150,8 @@ export function useVoiceAssistant(): UseVoiceAssistantReturn {
       try {
         setIsLoading(true);
         
-        // Try ElevenLabs first, fallback to browser TTS
-        const elevenLabsSuccess = await speakWithElevenLabs(text);
-        
-        if (!elevenLabsSuccess) {
-          // Use browser's built-in TTS as fallback
-          await speakWithBrowserTTS(text);
-        }
+        // Use browser's built-in TTS (ElevenLabs free tier is currently blocked)
+        await speakWithBrowserTTS(text);
         
         setIsLoading(false);
       } catch (error) {
@@ -172,7 +162,7 @@ export function useVoiceAssistant(): UseVoiceAssistantReturn {
 
     isProcessingQueueRef.current = false;
     setIsSpeaking(false);
-  }, [speakWithElevenLabs, speakWithBrowserTTS]);
+  }, [speakWithBrowserTTS]);
 
   const speak = useCallback(async (text: string) => {
     if (!isEnabled || !text) return;
