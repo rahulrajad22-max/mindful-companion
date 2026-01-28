@@ -39,9 +39,9 @@ export function useVoiceAssistant(): UseVoiceAssistantReturn {
   const [selectedLanguage, setSelectedLanguage] = useState<VoiceLanguage>(VOICE_LANGUAGES[0]);
   const [voicesLoaded, setVoicesLoaded] = useState(false);
   
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioQueueRef = useRef<string[]>([]);
   const isProcessingQueueRef = useRef(false);
+  const translationCacheRef = useRef<Map<string, string>>(new Map());
 
   // Preload browser voices on mount
   useEffect(() => {
@@ -62,12 +62,12 @@ export function useVoiceAssistant(): UseVoiceAssistantReturn {
     }
   }, []);
 
+  // Clear cache when language changes
+  useEffect(() => {
+    translationCacheRef.current.clear();
+  }, [selectedLanguage.code]);
+
   const stop = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      audioRef.current = null;
-    }
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
@@ -77,16 +77,64 @@ export function useVoiceAssistant(): UseVoiceAssistantReturn {
     setIsLoading(false);
   }, []);
 
-  // Browser's Web Speech API (always available fallback)
+  // Translate text using Lovable AI (Gemini)
+  const translateText = useCallback(async (text: string): Promise<string> => {
+    // Check cache first
+    const cacheKey = `${selectedLanguage.code}:${text}`;
+    const cached = translationCacheRef.current.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // If English, no translation needed
+    if (selectedLanguage.code === 'en-IN') {
+      return text;
+    }
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/translate-text`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ 
+            text, 
+            targetLanguage: selectedLanguage.code 
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        console.warn('Translation failed, using original text');
+        return text;
+      }
+
+      const data = await response.json();
+      const translatedText = data.translatedText || text;
+      
+      // Cache the translation
+      translationCacheRef.current.set(cacheKey, translatedText);
+      
+      return translatedText;
+    } catch (error) {
+      console.warn('Translation error:', error);
+      return text;
+    }
+  }, [selectedLanguage.code]);
+
+  // Browser's Web Speech API
   const speakWithBrowserTTS = useCallback((text: string): Promise<void> => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       if (!('speechSynthesis' in window)) {
         console.warn('Web Speech API not supported');
-        resolve(); // Don't reject, just continue silently
+        resolve();
         return;
       }
 
-      // Cancel any ongoing speech first
       window.speechSynthesis.cancel();
 
       const utterance = new SpeechSynthesisUtterance(text);
@@ -99,7 +147,6 @@ export function useVoiceAssistant(): UseVoiceAssistantReturn {
       const voices = window.speechSynthesis.getVoices();
       const langCode = selectedLanguage.code.split('-')[0];
       
-      // First try exact match, then partial match, then any English voice
       let matchingVoice = voices.find(v => v.lang === selectedLanguage.code);
       if (!matchingVoice) {
         matchingVoice = voices.find(v => v.lang.startsWith(langCode));
@@ -112,20 +159,18 @@ export function useVoiceAssistant(): UseVoiceAssistantReturn {
         utterance.voice = matchingVoice;
       }
 
-      utterance.onend = () => resolve();
-      utterance.onerror = (e) => {
-        console.warn('Browser TTS error:', e);
-        resolve(); // Don't reject, just continue
-      };
-
-      // Chrome bug workaround: resume synthesis if it gets stuck
-      const resumeInfinity = () => {
+      // Chrome bug workaround
+      const timeout = setTimeout(() => {
         window.speechSynthesis.pause();
         window.speechSynthesis.resume();
-      };
-      const timeout = setTimeout(resumeInfinity, 10000);
+      }, 10000);
 
       utterance.onend = () => {
+        clearTimeout(timeout);
+        resolve();
+      };
+      
+      utterance.onerror = () => {
         clearTimeout(timeout);
         resolve();
       };
@@ -134,7 +179,6 @@ export function useVoiceAssistant(): UseVoiceAssistantReturn {
     });
   }, [selectedLanguage.code]);
 
-  // Skip ElevenLabs entirely - use browser TTS only (ElevenLabs free tier is blocked)
   const processQueue = useCallback(async () => {
     if (isProcessingQueueRef.current || audioQueueRef.current.length === 0) {
       return;
@@ -150,10 +194,11 @@ export function useVoiceAssistant(): UseVoiceAssistantReturn {
       try {
         setIsLoading(true);
         
-        // Use browser's built-in TTS (ElevenLabs free tier is currently blocked)
-        await speakWithBrowserTTS(text);
-        
+        // Translate using Gemini, then speak with browser TTS
+        const translatedText = await translateText(text);
         setIsLoading(false);
+        
+        await speakWithBrowserTTS(translatedText);
       } catch (error) {
         console.error('Voice assistant error:', error);
         setIsLoading(false);
@@ -162,7 +207,7 @@ export function useVoiceAssistant(): UseVoiceAssistantReturn {
 
     isProcessingQueueRef.current = false;
     setIsSpeaking(false);
-  }, [speakWithBrowserTTS]);
+  }, [translateText, speakWithBrowserTTS]);
 
   const speak = useCallback(async (text: string) => {
     if (!isEnabled || !text) return;
