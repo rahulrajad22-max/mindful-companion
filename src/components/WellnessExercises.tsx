@@ -1032,6 +1032,7 @@ export function WellnessExercises() {
                     selectedLanguage={voiceAssistant.selectedLanguage}
                     onToggle={voiceAssistant.toggleVoiceAssistant}
                     onLanguageChange={voiceAssistant.setSelectedLanguage}
+                    onTestVoice={voiceAssistant.testVoice}
                   />
                 </div>
               </DialogHeader>

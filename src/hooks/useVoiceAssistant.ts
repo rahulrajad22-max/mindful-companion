@@ -29,6 +29,7 @@ interface UseVoiceAssistantReturn {
   setSelectedLanguage: (lang: VoiceLanguage) => void;
   toggleVoiceAssistant: () => void;
   speak: (text: string) => Promise<void>;
+  testVoice: () => Promise<void>;
   stop: () => void;
 }
 
@@ -226,6 +227,20 @@ export function useVoiceAssistant(): UseVoiceAssistantReturn {
     setIsEnabled(!isEnabled);
   }, [isEnabled, stop]);
 
+  const testVoice = useCallback(async () => {
+    const testPhrase = "Welcome to your wellness journey. Take a deep breath and relax.";
+    
+    setIsLoading(true);
+    try {
+      const translatedText = await translateText(testPhrase);
+      setIsLoading(false);
+      await speakWithBrowserTTS(translatedText);
+    } catch (error) {
+      console.error('Test voice error:', error);
+      setIsLoading(false);
+    }
+  }, [translateText, speakWithBrowserTTS]);
+
   return {
     isEnabled,
     isSpeaking,
@@ -234,6 +249,7 @@ export function useVoiceAssistant(): UseVoiceAssistantReturn {
     setSelectedLanguage,
     toggleVoiceAssistant,
     speak,
+    testVoice,
     stop,
   };
 }
