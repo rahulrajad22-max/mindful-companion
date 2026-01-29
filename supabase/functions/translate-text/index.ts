@@ -48,6 +48,7 @@ serve(async (req) => {
 
     console.log(`Translating to ${languageName}: "${text.substring(0, 50)}..."`);
 
+    // First translate to the target language, then transliterate to Roman script for TTS
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -59,14 +60,22 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a translator. Translate the given text to ${languageName}. Only output the translated text, nothing else. Keep it natural and conversational for spoken voice guidance during wellness exercises.`
+            content: `You are a translator and transliterator. Your task:
+1. Translate the given English text to ${languageName}
+2. Then provide a ROMANIZED (Latin script) version of the translation that an English text-to-speech system can pronounce naturally
+
+IMPORTANT: Output ONLY the romanized transliteration, nothing else. The output should be easy for an English TTS engine to read aloud and sound like natural ${languageName}.
+
+Example for Hindi: "Take a deep breath" -> "Gehri saans lein" (not "गहरी सांस लें")
+Example for Tamil: "Welcome" -> "Vanakkam" (not "வணக்கம்")
+Example for Bengali: "Hello" -> "Namaskar" (not "নমস্কার")`
           },
           {
             role: 'user',
             content: text
           }
         ],
-        max_tokens: 200,
+        max_tokens: 300,
       }),
     });
 
@@ -88,7 +97,7 @@ serve(async (req) => {
     const data = await response.json();
     const translatedText = data.choices?.[0]?.message?.content?.trim() || text;
     
-    console.log(`Translation result: "${translatedText.substring(0, 50)}..."`);
+    console.log(`Transliteration result: "${translatedText.substring(0, 50)}..."`);
 
     return new Response(JSON.stringify({ translatedText }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
