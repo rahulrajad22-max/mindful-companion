@@ -1,4 +1,4 @@
-import { Volume2, VolumeX, Loader2 } from "lucide-react";
+import { Volume2, VolumeX, Loader2, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,6 +16,7 @@ interface VoiceAssistantControlsProps {
   selectedLanguage: VoiceLanguage;
   onToggle: () => void;
   onLanguageChange: (language: VoiceLanguage) => void;
+  onTestVoice: () => void;
   className?: string;
 }
 
@@ -26,6 +27,7 @@ export function VoiceAssistantControls({
   selectedLanguage,
   onToggle,
   onLanguageChange,
+  onTestVoice,
   className,
 }: VoiceAssistantControlsProps) {
   return (
@@ -61,6 +63,24 @@ export function VoiceAssistantControls({
           ))}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {/* Test Voice Button */}
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={onTestVoice}
+        disabled={isSpeaking || isLoading}
+        className="h-8 gap-1"
+        title="Test voice in selected language"
+      >
+        {isLoading ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Play className="h-4 w-4" />
+        )}
+        <span className="hidden sm:inline text-xs">Test</span>
+      </Button>
 
       {/* Voice Toggle Button */}
       <Button
