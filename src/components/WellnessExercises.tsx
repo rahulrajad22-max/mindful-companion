@@ -43,8 +43,6 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useVoiceAssistant } from "@/hooks/useVoiceAssistant";
-import { VoiceAssistantControls } from "@/components/VoiceAssistantControls";
 
 interface Exercise {
   id: string;
@@ -217,7 +215,6 @@ const DURATION_PRESETS = [
 
 export function WellnessExercises() {
   const { user } = useAuth();
-  const voiceAssistant = useVoiceAssistant();
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(0);
@@ -413,8 +410,6 @@ export function WellnessExercises() {
   }, [isRunning, selectedExercise, customDuration]);
 
   // Track current step changes
-  const prevStepRef = useRef<number>(-1);
-  
   useEffect(() => {
     if (selectedExercise && customDuration > 0 && timeRemaining > 0) {
       const stepDuration = customDuration / selectedExercise.instructions.length;
@@ -426,35 +421,6 @@ export function WellnessExercises() {
       setCurrentStep(step);
     }
   }, [timeRemaining, selectedExercise, customDuration]);
-
-  // Voice announcement effect - speaks when step changes
-  useEffect(() => {
-    if (
-      isRunning && 
-      selectedExercise && 
-      voiceAssistant.isEnabled &&
-      currentStep !== prevStepRef.current
-    ) {
-      const instruction = selectedExercise.instructions[currentStep];
-      if (instruction) {
-        voiceAssistant.speak(instruction);
-      }
-      prevStepRef.current = currentStep;
-    }
-    
-    // Announce completion
-    if (timeRemaining === 0 && prevStepRef.current !== -2) {
-      if (voiceAssistant.isEnabled) {
-        voiceAssistant.speak("Exercise complete! Great job taking care of yourself.");
-      }
-      prevStepRef.current = -2; // Mark as announced
-    }
-  }, [currentStep, isRunning, selectedExercise, timeRemaining, voiceAssistant]);
-
-  // Reset step tracking when exercise changes
-  useEffect(() => {
-    prevStepRef.current = -1;
-  }, [selectedExercise]);
 
   const openExercise = (exercise: Exercise) => {
     setSelectedExercise(exercise);
@@ -472,7 +438,6 @@ export function WellnessExercises() {
     setCustomDuration(0);
     setCurrentStep(0);
     setShowTimerSetup(true);
-    voiceAssistant.stop(); // Stop voice when closing
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
@@ -1022,19 +987,7 @@ export function WellnessExercises() {
                     </div>
                     {selectedExercise.name}
                   </div>
-                </DialogTitle>
-                {/* Voice Assistant Controls */}
-                <div className="flex items-center justify-end pt-2">
-                  <VoiceAssistantControls
-                    isEnabled={voiceAssistant.isEnabled}
-                    isSpeaking={voiceAssistant.isSpeaking}
-                    isLoading={voiceAssistant.isLoading}
-                    selectedLanguage={voiceAssistant.selectedLanguage}
-                    onToggle={voiceAssistant.toggleVoiceAssistant}
-                    onLanguageChange={voiceAssistant.setSelectedLanguage}
-                    onTestVoice={voiceAssistant.testVoice}
-                  />
-                </div>
+              </DialogTitle>
               </DialogHeader>
 
               <div className="space-y-6 py-4">
