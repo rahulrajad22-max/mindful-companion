@@ -1,5 +1,5 @@
 // @refresh reset
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,7 +36,9 @@ import {
   Moon,
   Zap,
   Music,
-  Smile
+  Smile,
+  Volume2,
+  VolumeX
 } from "lucide-react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
@@ -232,6 +234,10 @@ export function WellnessExercises() {
   });
   const [loadingStats, setLoadingStats] = useState(true);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Voice narration state
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const prevStepRef = useRef<number>(-1);
 
   // Custom exercise state
   const [customExercises, setCustomExercises] = useState<CustomExerciseData[]>([]);
@@ -422,6 +428,51 @@ export function WellnessExercises() {
     }
   }, [timeRemaining, selectedExercise, customDuration]);
 
+  // Voice narration - speak when step changes
+  const speak = useCallback((text: string) => {
+    if (!('speechSynthesis' in window)) return;
+    
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    window.speechSynthesis.speak(utterance);
+  }, []);
+
+  const stopSpeaking = useCallback(() => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+  }, []);
+
+  // Speak instruction when step changes
+  useEffect(() => {
+    if (
+      isRunning && 
+      selectedExercise && 
+      voiceEnabled &&
+      currentStep !== prevStepRef.current
+    ) {
+      const instruction = selectedExercise.instructions[currentStep];
+      if (instruction) {
+        speak(instruction);
+      }
+      prevStepRef.current = currentStep;
+    }
+    
+    // Announce completion
+    if (timeRemaining === 0 && prevStepRef.current !== -2 && voiceEnabled) {
+      speak("Exercise complete! Great job taking care of yourself.");
+      prevStepRef.current = -2;
+    }
+  }, [currentStep, isRunning, selectedExercise, timeRemaining, voiceEnabled, speak]);
+
+  // Reset step tracking when exercise changes
+  useEffect(() => {
+    prevStepRef.current = -1;
+  }, [selectedExercise]);
+
   const openExercise = (exercise: Exercise) => {
     setSelectedExercise(exercise);
     setCustomDuration(exercise.suggestedDuration);
@@ -438,6 +489,7 @@ export function WellnessExercises() {
     setCustomDuration(0);
     setCurrentStep(0);
     setShowTimerSetup(true);
+    stopSpeaking();
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
@@ -987,7 +1039,20 @@ export function WellnessExercises() {
                     </div>
                     {selectedExercise.name}
                   </div>
-              </DialogTitle>
+                  <Button
+                    variant={voiceEnabled ? "default" : "outline"}
+                    size="icon"
+                    onClick={() => setVoiceEnabled(!voiceEnabled)}
+                    className="h-8 w-8"
+                    title={voiceEnabled ? "Disable voice narration" : "Enable voice narration"}
+                  >
+                    {voiceEnabled ? (
+                      <Volume2 className="h-4 w-4" />
+                    ) : (
+                      <VolumeX className="h-4 w-4" />
+                    )}
+                  </Button>
+                </DialogTitle>
               </DialogHeader>
 
               <div className="space-y-6 py-4">
