@@ -25,7 +25,13 @@ export function Navbar() {
   };
 
   const toggleTheme = () => {
+    // Add transitioning class for smooth animation
+    document.documentElement.classList.add('transitioning');
     setTheme(theme === "dark" ? "light" : "dark");
+    // Remove class after transition completes
+    setTimeout(() => {
+      document.documentElement.classList.remove('transitioning');
+    }, 300);
   };
 
   return (
