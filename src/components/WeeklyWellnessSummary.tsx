@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, TrendingUp, TrendingDown, Minus, Sun, Droplets, Activity } from "lucide-react";
+import { Loader2, TrendingUp, TrendingDown, Minus, Sun, Droplets, Activity, Flame } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -12,6 +12,7 @@ interface WeeklyStats {
   waterTrend: "up" | "down" | "stable";
   exerciseTrend: "up" | "down" | "stable";
   daysLogged: number;
+  streakWeeks: number;
 }
 
 export function WeeklyWellnessSummary() {
@@ -56,6 +57,18 @@ export function WeeklyWellnessSummary() {
 
       if (lastWeekError) throw lastWeekError;
 
+      // Fetch all logs to calculate streak (weeks with at least 1 log)
+      const { data: allLogs, error: allLogsError } = await supabase
+        .from("wellness_logs")
+        .select("log_date")
+        .eq("user_id", user.id)
+        .order("log_date", { ascending: false });
+
+      if (allLogsError) throw allLogsError;
+
+      // Calculate streak weeks
+      const streakWeeks = calculateStreakWeeks(allLogs || []);
+
       // Calculate this week's averages
       const thisWeekCount = thisWeek?.length || 0;
       const thisWeekSleep = thisWeek?.reduce((sum, log) => sum + log.sleep_hours, 0) || 0;
@@ -93,12 +106,47 @@ export function WeeklyWellnessSummary() {
         waterTrend: getTrend(avgWater, lastAvgWater),
         exerciseTrend: getTrend(avgExercise, lastAvgExercise),
         daysLogged: thisWeekCount,
+        streakWeeks,
       });
     } catch (error) {
       console.error("Error fetching weekly stats:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const calculateStreakWeeks = (logs: { log_date: string }[]): number => {
+    if (logs.length === 0) return 0;
+
+    const getWeekStart = (date: Date): string => {
+      const d = new Date(date);
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday as start
+      d.setDate(diff);
+      return d.toISOString().split("T")[0];
+    };
+
+    // Get unique weeks with logs
+    const weeksWithLogs = new Set(
+      logs.map(log => getWeekStart(new Date(log.log_date)))
+    );
+
+    // Check consecutive weeks starting from current week
+    let streak = 0;
+    const today = new Date();
+    let checkDate = new Date(today);
+
+    while (true) {
+      const weekStart = getWeekStart(checkDate);
+      if (weeksWithLogs.has(weekStart)) {
+        streak++;
+        checkDate.setDate(checkDate.getDate() - 7);
+      } else {
+        break;
+      }
+    }
+
+    return streak;
   };
 
   const TrendIcon = ({ trend }: { trend: "up" | "down" | "stable" }) => {
@@ -171,33 +219,44 @@ export function WeeklyWellnessSummary() {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Weekly Summary</CardTitle>
-          <span className="text-xs text-muted-foreground">
-            {stats.daysLogged} day{stats.daysLogged !== 1 ? "s" : ""} logged
-          </span>
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-lg truncate">Weekly Summary</CardTitle>
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Streak Badge */}
+            {stats.streakWeeks > 0 && (
+              <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-accent/20 border border-accent/30">
+                <Flame className="h-4 w-4 text-accent animate-pulse-soft" />
+                <span className="text-xs font-bold text-accent">
+                  {stats.streakWeeks}w
+                </span>
+              </div>
+            )}
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              {stats.daysLogged} day{stats.daysLogged !== 1 ? "s" : ""}
+            </span>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {summaryItems.map((item) => (
           <div
             key={item.label}
-            className="flex items-center justify-between p-3 rounded-xl bg-muted/50"
+            className="flex items-center justify-between p-3 rounded-xl bg-muted/50 gap-2"
           >
-            <div className="flex items-center gap-3">
-              <item.icon className={`h-5 w-5 ${item.color}`} />
-              <div>
-                <p className="text-sm font-medium text-foreground">{item.label}</p>
-                <p className="text-xs text-muted-foreground">{item.unit}</p>
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <item.icon className={`h-5 w-5 shrink-0 ${item.color}`} />
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">{item.label}</p>
+                <p className="text-xs text-muted-foreground truncate">{item.unit}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <span className="text-xl font-display font-bold text-foreground">
                 {item.value}
               </span>
               <div className="flex flex-col items-end">
                 <TrendIcon trend={item.trend} />
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-[10px] text-muted-foreground whitespace-nowrap">
                   {getTrendLabel(item.trend)}
                 </span>
               </div>
