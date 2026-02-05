@@ -372,6 +372,38 @@ export function WellnessExercises() {
     return { currentStreak, longestStreak };
   };
 
+  const calculateWeeklyStreak = (): number => {
+    if (completions.length === 0) return 0;
+
+    const getWeekStart = (date: Date): string => {
+      const d = new Date(date);
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      d.setDate(diff);
+      return d.toISOString().split("T")[0];
+    };
+
+    const weeksWithCompletions = new Set(
+      completions.map(c => getWeekStart(new Date(c.completed_at)))
+    );
+
+    let streak = 0;
+    const today = new Date();
+    let checkDate = new Date(today);
+
+    while (true) {
+      const weekStart = getWeekStart(checkDate);
+      if (weeksWithCompletions.has(weekStart)) {
+        streak++;
+        checkDate.setDate(checkDate.getDate() - 7);
+      } else {
+        break;
+      }
+    }
+
+    return streak;
+  };
+
   const saveCompletion = async (exercise: Exercise, duration: number) => {
     if (!user) return;
 
@@ -715,42 +747,47 @@ export function WellnessExercises() {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Timer className="h-5 w-5 text-primary" />
-            Wellness Exercises
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-lg flex items-center gap-2 min-w-0">
+            <Timer className="h-5 w-5 text-primary shrink-0" />
+            <span className="truncate">Wellness Exercises</span>
           </CardTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 shrink-0">
             <Button
               variant="ghost"
               size="sm"
               onClick={openCreateDialog}
-              className="text-xs"
+              className="text-xs h-8 px-2"
             >
               <PlusCircle className="h-4 w-4 mr-1" />
-              Create
+              <span className="hidden sm:inline">Create</span>
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowHistory(true)}
-              className="text-xs"
+              className="text-xs h-8 px-2"
             >
               <History className="h-4 w-4 mr-1" />
-              History
+              <span className="hidden sm:inline">History</span>
             </Button>
           </div>
         </div>
         
         {!loadingStats && user && (
-          <div className="flex items-center gap-3 mt-2">
+          <div className="flex flex-wrap items-center gap-3 mt-2">
             <div className="flex items-center gap-1 text-xs">
-              <Flame className="h-4 w-4 text-orange-500" />
+              <Flame className="h-4 w-4 text-accent shrink-0" />
               <span className="font-medium">{stats.currentStreak}</span>
-              <span className="text-muted-foreground">day streak</span>
+              <span className="text-muted-foreground whitespace-nowrap">day streak</span>
             </div>
             <div className="flex items-center gap-1 text-xs">
-              <Trophy className="h-4 w-4 text-yellow-500" />
+              <Flame className="h-4 w-4 text-primary shrink-0" />
+              <span className="font-medium">{calculateWeeklyStreak()}</span>
+              <span className="text-muted-foreground whitespace-nowrap">week streak</span>
+            </div>
+            <div className="flex items-center gap-1 text-xs">
+              <Trophy className="h-4 w-4 text-secondary-foreground shrink-0" />
               <span className="font-medium">{stats.totalCompletions}</span>
               <span className="text-muted-foreground">total</span>
             </div>
