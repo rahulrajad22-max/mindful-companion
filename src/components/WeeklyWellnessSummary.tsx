@@ -13,6 +13,7 @@ interface WeeklyStats {
   exerciseTrend: "up" | "down" | "stable";
   daysLogged: number;
   streakWeeks: number;
+  streakDays: number;
 }
 
 export function WeeklyWellnessSummary() {
@@ -98,6 +99,9 @@ export function WeeklyWellnessSummary() {
         return "stable";
       };
 
+      // Calculate daily streak
+      const streakDays = calculateStreakDays(allLogs || []);
+
       setStats({
         avgSleep: Math.round(avgSleep * 10) / 10,
         avgWater: Math.round(avgWater * 10) / 10,
@@ -107,6 +111,7 @@ export function WeeklyWellnessSummary() {
         exerciseTrend: getTrend(avgExercise, lastAvgExercise),
         daysLogged: thisWeekCount,
         streakWeeks,
+        streakDays,
       });
     } catch (error) {
       console.error("Error fetching weekly stats:", error);
@@ -141,6 +146,41 @@ export function WeeklyWellnessSummary() {
       if (weeksWithLogs.has(weekStart)) {
         streak++;
         checkDate.setDate(checkDate.getDate() - 7);
+      } else {
+        break;
+      }
+    }
+
+    return streak;
+  };
+
+  const calculateStreakDays = (logs: { log_date: string }[]): number => {
+    if (logs.length === 0) return 0;
+
+    const uniqueDates = [...new Set(logs.map(l => l.log_date))].sort(
+      (a, b) => new Date(b).getTime() - new Date(a).getTime()
+    );
+
+    const today = new Date().toISOString().split("T")[0];
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split("T")[0];
+
+    // Streak only counts if most recent log is today or yesterday
+    if (uniqueDates[0] !== today && uniqueDates[0] !== yesterdayStr) {
+      return 0;
+    }
+
+    let streak = 1;
+    for (let i = 1; i < uniqueDates.length; i++) {
+      const prevDate = new Date(uniqueDates[i - 1]);
+      const currDate = new Date(uniqueDates[i]);
+      const diffDays = Math.floor(
+        (prevDate.getTime() - currDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      if (diffDays === 1) {
+        streak++;
       } else {
         break;
       }
@@ -221,21 +261,33 @@ export function WeeklyWellnessSummary() {
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-lg truncate">Weekly Summary</CardTitle>
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Streak Badge */}
-            {stats.streakWeeks > 0 && (
+          <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">
+            {stats.daysLogged} day{stats.daysLogged !== 1 ? "s" : ""} logged
+          </span>
+        </div>
+        {/* Streak Badges */}
+        {(stats.streakDays > 0 || stats.streakWeeks > 0) && (
+          <div className="flex items-center gap-2 mt-2 flex-wrap">
+            {stats.streakDays > 0 && (
               <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-accent/20 border border-accent/30">
                 <Flame className="h-4 w-4 text-accent animate-pulse-soft" />
                 <span className="text-xs font-bold text-accent">
-                  {stats.streakWeeks}w
+                  {stats.streakDays}d
                 </span>
+                <span className="text-[10px] text-muted-foreground">streak</span>
               </div>
             )}
-            <span className="text-xs text-muted-foreground whitespace-nowrap">
-              {stats.daysLogged} day{stats.daysLogged !== 1 ? "s" : ""}
-            </span>
+            {stats.streakWeeks > 0 && (
+              <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-primary/20 border border-primary/30">
+                <Flame className="h-4 w-4 text-primary" />
+                <span className="text-xs font-bold text-primary">
+                  {stats.streakWeeks}w
+                </span>
+                <span className="text-[10px] text-muted-foreground">streak</span>
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         {summaryItems.map((item) => (
