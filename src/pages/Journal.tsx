@@ -234,13 +234,13 @@ export default function Journal() {
                     key={index}
                     variant="ghost"
                     className={cn(
-                      "w-full justify-start text-left h-auto py-3 px-3",
+                      "w-full justify-start text-left h-auto py-3 px-3 whitespace-normal",
                       selectedPrompt === prompt && "bg-primary-soft border border-primary/30"
                     )}
                     onClick={() => usePrompt(prompt)}
                     disabled={isAnalyzing}
                   >
-                    <p className="text-sm text-muted-foreground leading-relaxed">
+                    <p className="text-sm text-muted-foreground leading-relaxed break-words overflow-hidden">
                       {prompt}
                     </p>
                   </Button>
