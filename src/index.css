@@ -264,3 +264,15 @@
     opacity: 0.7;
   }
 }
+
+/* Safe area for mobile bottom nav */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Prevent content from hiding behind mobile bottom nav */
+@media (max-width: 767px) {
+  main {
+    padding-bottom: 5rem;
+  }
+}
