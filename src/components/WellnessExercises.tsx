@@ -11,6 +11,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { 
   Wind, 
   Eye, 
@@ -753,24 +758,34 @@ export function WellnessExercises() {
             <span>Wellness</span>
           </CardTitle>
           <div className="flex items-center gap-0.5 shrink-0">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={openCreateDialog}
-              className="text-xs h-8 px-2"
-            >
-              <PlusCircle className="h-4 w-4" />
-              <span className="sr-only">Create</span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowHistory(true)}
-              className="text-xs h-8 px-2"
-            >
-              <History className="h-4 w-4" />
-              <span className="sr-only">History</span>
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={openCreateDialog}
+                  className="text-xs h-8 px-2"
+                >
+                  <PlusCircle className="h-4 w-4" />
+                  <span className="sr-only">Create</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Create exercise</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowHistory(true)}
+                  className="text-xs h-8 px-2"
+                >
+                  <History className="h-4 w-4" />
+                  <span className="sr-only">History</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>View history</TooltipContent>
+            </Tooltip>
           </div>
         </div>
         
