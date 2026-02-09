@@ -747,20 +747,20 @@ export function WellnessExercises() {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-lg flex items-center gap-2 min-w-0">
+        <div className="flex items-center justify-between gap-1">
+          <CardTitle className="text-lg flex items-center gap-2 shrink-0">
             <Timer className="h-5 w-5 text-primary shrink-0" />
-            <span className="truncate">Wellness Exercises</span>
+            <span>Wellness</span>
           </CardTitle>
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-0.5 shrink-0">
             <Button
               variant="ghost"
               size="sm"
               onClick={openCreateDialog}
               className="text-xs h-8 px-2"
             >
-              <PlusCircle className="h-4 w-4 mr-1" />
-              <span className="hidden sm:inline">Create</span>
+              <PlusCircle className="h-4 w-4" />
+              <span className="sr-only">Create</span>
             </Button>
             <Button
               variant="ghost"
@@ -768,28 +768,25 @@ export function WellnessExercises() {
               onClick={() => setShowHistory(true)}
               className="text-xs h-8 px-2"
             >
-              <History className="h-4 w-4 mr-1" />
-              <span className="hidden sm:inline">History</span>
+              <History className="h-4 w-4" />
+              <span className="sr-only">History</span>
             </Button>
           </div>
         </div>
         
         {!loadingStats && user && (
-          <div className="flex flex-wrap items-center gap-3 mt-2">
-            <div className="flex items-center gap-1 text-xs">
-              <Flame className="h-4 w-4 text-accent shrink-0" />
-              <span className="font-medium">{stats.currentStreak}</span>
-              <span className="text-muted-foreground whitespace-nowrap">day streak</span>
+          <div className="flex flex-wrap items-center gap-2 mt-1">
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/20 border border-accent/30">
+              <Flame className="h-3.5 w-3.5 text-accent shrink-0" />
+              <span className="text-xs font-bold text-accent">{stats.currentStreak}d</span>
             </div>
-            <div className="flex items-center gap-1 text-xs">
-              <Flame className="h-4 w-4 text-primary shrink-0" />
-              <span className="font-medium">{calculateWeeklyStreak()}</span>
-              <span className="text-muted-foreground whitespace-nowrap">week streak</span>
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/20 border border-primary/30">
+              <Flame className="h-3.5 w-3.5 text-primary shrink-0" />
+              <span className="text-xs font-bold text-primary">{calculateWeeklyStreak()}w</span>
             </div>
-            <div className="flex items-center gap-1 text-xs">
-              <Trophy className="h-4 w-4 text-secondary-foreground shrink-0" />
-              <span className="font-medium">{stats.totalCompletions}</span>
-              <span className="text-muted-foreground">total</span>
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted border border-border/50">
+              <Trophy className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              <span className="text-xs font-medium text-muted-foreground">{stats.totalCompletions}</span>
             </div>
           </div>
         )}
@@ -818,7 +815,7 @@ export function WellnessExercises() {
                     </Badge>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground truncate">
+                <p className="text-xs text-muted-foreground line-clamp-2">
                   {exercise.description}
                 </p>
               </div>
