@@ -1,20 +1,15 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { MoodSelector } from "@/components/MoodSelector";
-import { MoodChart } from "@/components/MoodChart";
-import { MoodCalendar } from "@/components/MoodCalendar";
-import { SentimentTrendsChart } from "@/components/SentimentTrendsChart";
 import { JournalEntry } from "@/components/JournalEntry";
 import { InsightCard } from "@/components/InsightCard";
 import { WellnessTracker } from "@/components/WellnessTracker";
 import { WeeklyWellnessSummary } from "@/components/WeeklyWellnessSummary";
 import { WellnessExercises } from "@/components/WellnessExercises";
 import { QuickResources } from "@/components/QuickResources";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, Loader2 } from "lucide-react";
-import { TimeRange } from "@/components/TimeRangeToggle";
 import { useMoodEntries } from "@/hooks/useMoodEntries";
-import { useJournalEntries } from "@/hooks/useJournalEntries";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -22,34 +17,16 @@ type MoodLevel = "great" | "good" | "okay" | "low" | "bad";
 
 export default function Dashboard() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [moodTimeRange, setMoodTimeRange] = useState<TimeRange>("weekly");
-  const [sentimentTimeRange, setSentimentTimeRange] = useState<TimeRange>("weekly");
   
   const { 
     loading: moodLoading, 
     todaysMood, 
     weeklyData: weeklyMoodData, 
-    monthlyData: monthlyMoodData, 
     saveMood 
   } = useMoodEntries();
   
-  const { 
-    weeklySentimentData, 
-    monthlySentimentData 
-  } = useJournalEntries();
-  
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  const moodData = useMemo(() => 
-    moodTimeRange === "weekly" ? weeklyMoodData : monthlyMoodData, 
-    [moodTimeRange, weeklyMoodData, monthlyMoodData]
-  );
-
-  const sentimentData = useMemo(() => 
-    sentimentTimeRange === "weekly" ? weeklySentimentData : monthlySentimentData, 
-    [sentimentTimeRange, weeklySentimentData, monthlySentimentData]
-  );
 
   const handleMoodSelect = async (mood: MoodLevel) => {
     try {
@@ -69,7 +46,6 @@ export default function Dashboard() {
 
   const handleJournalSave = (entry: string) => {
     setIsAnalyzing(true);
-    // Navigate to journal page for full experience
     navigate("/journal");
   };
 
@@ -132,27 +108,9 @@ export default function Dashboard() {
               <JournalEntry onSave={handleJournalSave} isAnalyzing={isAnalyzing} />
             </div>
 
-            {/* Sentiment Trends Chart */}
+            {/* Wellness Exercises */}
             <div className="animate-fade-up" style={{ animationDelay: "300ms" }}>
-              <SentimentTrendsChart 
-                data={sentimentData} 
-                timeRange={sentimentTimeRange}
-                onTimeRangeChange={setSentimentTimeRange}
-              />
-            </div>
-
-            {/* Mood Calendar */}
-            <div className="animate-fade-up" style={{ animationDelay: "400ms" }}>
-              <MoodCalendar />
-            </div>
-
-            {/* Mood Chart */}
-            <div className="animate-fade-up" style={{ animationDelay: "500ms" }}>
-              <MoodChart 
-                data={moodData} 
-                timeRange={moodTimeRange}
-                onTimeRangeChange={setMoodTimeRange}
-              />
+              <WellnessExercises />
             </div>
           </div>
 
@@ -172,12 +130,12 @@ export default function Dashboard() {
             <div className="space-y-4 animate-fade-up" style={{ animationDelay: "250ms" }}>
               <h3 className="font-display text-lg font-semibold text-foreground">AI Insights</h3>
               
-              {moodData.length > 0 ? (
+              {weeklyMoodData.length > 0 ? (
                 <>
                   <InsightCard
                     type="sentiment"
                     title="Mood Tracking Active"
-                    description={`You've logged ${moodData.length} mood entries recently. Keep tracking to see patterns!`}
+                    description={`You've logged ${weeklyMoodData.length} mood entries recently. Keep tracking to see patterns!`}
                     level="positive"
                   />
                   
@@ -207,13 +165,8 @@ export default function Dashboard() {
               )}
             </div>
 
-            {/* Wellness Exercises */}
-            <div className="animate-fade-up" style={{ animationDelay: "350ms" }}>
-              <WellnessExercises />
-            </div>
-
             {/* Resources */}
-            <div className="animate-fade-up" style={{ animationDelay: "400ms" }}>
+            <div className="animate-fade-up" style={{ animationDelay: "350ms" }}>
               <QuickResources />
             </div>
           </div>
