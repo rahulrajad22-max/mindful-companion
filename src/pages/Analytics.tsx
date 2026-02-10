@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Navbar } from "@/components/Navbar";
+import { ParallaxBackground } from "@/components/ParallaxBackground";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMoodEntries } from "@/hooks/useMoodEntries";
 import { useJournalEntries } from "@/hooks/useJournalEntries";
@@ -57,6 +58,7 @@ export default function Analytics() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
+      <ParallaxBackground variant="page" />
 
       <main className="container py-8">
         {/* Header */}

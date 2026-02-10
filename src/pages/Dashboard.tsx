@@ -7,6 +7,7 @@ import { WellnessTracker } from "@/components/WellnessTracker";
 import { WeeklyWellnessSummary } from "@/components/WeeklyWellnessSummary";
 import { WellnessExercises } from "@/components/WellnessExercises";
 import { QuickResources } from "@/components/QuickResources";
+import { ParallaxBackground } from "@/components/ParallaxBackground";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, Loader2 } from "lucide-react";
 import { useMoodEntries } from "@/hooks/useMoodEntries";
@@ -59,7 +60,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+      <ParallaxBackground variant="page" />
       <main className="container py-8">
         {/* Header */}
         <div className="mb-8 animate-fade-up">

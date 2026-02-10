@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { FeatureCard } from "@/components/FeatureCard";
 import { Navbar } from "@/components/Navbar";
+import { ParallaxBackground } from "@/components/ParallaxBackground";
+import { useParallax } from "@/hooks/useParallax";
 import { 
   Brain, 
   Heart, 
@@ -54,9 +56,12 @@ const benefits = [
 ];
 
 export default function Index() {
+  const { scrollY, getParallaxStyle } = useParallax();
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
+      <ParallaxBackground variant="hero" />
       
       {/* Hero Section */}
       <section className="relative overflow-hidden">
@@ -65,7 +70,10 @@ export default function Index() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,hsl(var(--accent)/0.08),transparent_50%)]" />
         
         <div className="container relative py-24 md:py-32 lg:py-40">
-          <div className="mx-auto max-w-3xl text-center animate-fade-up">
+          <div
+            className="mx-auto max-w-3xl text-center animate-fade-up"
+            style={{ transform: `translateY(${scrollY * -0.15}px)`, opacity: Math.max(0, 1 - scrollY / 600) }}
+          >
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary-soft px-4 py-1.5 mb-6">
               <Sparkles className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium text-primary">AI-Powered Mental Wellness</span>
@@ -144,7 +152,7 @@ export default function Index() {
                 ))}
               </ul>
             </div>
-            <div className="relative">
+            <div className="relative" style={{ transform: `translateY(${Math.max(0, (scrollY - 400)) * -0.08}px)` }}>
               <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/30 rounded-3xl blur-3xl" />
               <div className="relative bg-card border border-border/50 rounded-3xl p-8 shadow-elevated">
                 <div className="flex items-center gap-4 mb-6">

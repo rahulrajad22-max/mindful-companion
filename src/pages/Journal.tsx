@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Navbar } from "@/components/Navbar";
+import { ParallaxBackground } from "@/components/ParallaxBackground";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -75,6 +76,7 @@ export default function Journal() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
+      <ParallaxBackground variant="subtle" />
 
       <main className="container py-8">
         {/* Header */}
