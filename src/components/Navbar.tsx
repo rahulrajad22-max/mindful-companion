@@ -10,6 +10,7 @@ import {
   Sun,
   Moon,
   Home,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,6 +27,7 @@ const navItems = [
   { path: "/", label: "Home", icon: Home },
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { path: "/journal", label: "Journal", icon: BookOpen },
+  { path: "/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
 export function Navbar() {
