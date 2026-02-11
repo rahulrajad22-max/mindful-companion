@@ -47,7 +47,11 @@ export default function Dashboard() {
 
   const handleJournalSave = (entry: string) => {
     setIsAnalyzing(true);
-    navigate("/journal");
+    toast({
+      title: "Journal saved",
+      description: "Your journal entry has been saved successfully.",
+    });
+    setTimeout(() => setIsAnalyzing(false), 1000);
   };
 
   const today = new Date().toLocaleDateString("en-US", {
