@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AIAnalysisCard, JournalAnalysis } from "@/components/AIAnalysisCard";
-import { VoiceInput } from "@/components/VoiceInput";
+import { VoiceRecorder } from "@/components/VoiceRecorder";
 import { useJournalAnalysis } from "@/hooks/useJournalAnalysis";
 import { useJournalEntries } from "@/hooks/useJournalEntries";
 import { useToast } from "@/hooks/use-toast";
@@ -123,7 +123,7 @@ export default function Journal() {
                 />
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-3">
-                    <VoiceInput 
+                    <VoiceRecorder 
                       onTranscript={handleVoiceTranscript} 
                       disabled={isAnalyzing}
                     />
