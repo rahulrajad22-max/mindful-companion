@@ -11,6 +11,7 @@ import {
   Moon,
   Home,
   BarChart3,
+  MessageCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,6 +29,7 @@ const navItems = [
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { path: "/journal", label: "Journal", icon: BookOpen },
   { path: "/analytics", label: "Analytics", icon: BarChart3 },
+  { path: "/chat", label: "Chat", icon: MessageCircle },
 ];
 
 export function Navbar() {

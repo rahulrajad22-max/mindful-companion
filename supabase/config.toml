@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.reframe-text]
 verify_jwt = false
+
+[functions.wellness-chat]
+verify_jwt = false
