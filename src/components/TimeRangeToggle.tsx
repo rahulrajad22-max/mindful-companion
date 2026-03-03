@@ -1,30 +1,18 @@
+import { useTranslation } from "react-i18next";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export type TimeRange = "weekly" | "monthly";
 
-interface TimeRangeToggleProps {
-  value: TimeRange;
-  onChange: (value: TimeRange) => void;
-}
+interface TimeRangeToggleProps { value: TimeRange; onChange: (value: TimeRange) => void; }
 
 export function TimeRangeToggle({ value, onChange }: TimeRangeToggleProps) {
+  const { t } = useTranslation();
   return (
-    <ToggleGroup
-      type="single"
-      value={value}
-      onValueChange={(v) => v && onChange(v as TimeRange)}
-      className="bg-muted/50 p-1 rounded-lg"
-    >
-      <ToggleGroupItem
-        value="weekly"
-        className="text-xs px-3 py-1.5 data-[state=on]:bg-background data-[state=on]:shadow-sm rounded-md"
-      >
-        Weekly
+    <ToggleGroup type="single" value={value} onValueChange={(v) => v && onChange(v as TimeRange)} className="bg-muted/50 p-1 rounded-lg">
+      <ToggleGroupItem value="weekly" className="text-xs px-3 py-1.5 data-[state=on]:bg-background data-[state=on]:shadow-sm rounded-md">
+        {t("analytics.thisWeek")}
       </ToggleGroupItem>
-      <ToggleGroupItem
-        value="monthly"
-        className="text-xs px-3 py-1.5 data-[state=on]:bg-background data-[state=on]:shadow-sm rounded-md"
-      >
+      <ToggleGroupItem value="monthly" className="text-xs px-3 py-1.5 data-[state=on]:bg-background data-[state=on]:shadow-sm rounded-md">
         Monthly
       </ToggleGroupItem>
     </ToggleGroup>
