@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Navbar } from "@/components/Navbar";
 import { MoodSelector } from "@/components/MoodSelector";
 import { JournalEntry } from "@/components/JournalEntry";
@@ -17,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 type MoodLevel = "great" | "good" | "okay" | "low" | "bad";
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   
   const { 
@@ -32,33 +34,20 @@ export default function Dashboard() {
   const handleMoodSelect = async (mood: MoodLevel) => {
     try {
       await saveMood(mood);
-      toast({
-        title: "Mood logged",
-        description: "Your mood has been saved successfully.",
-      });
+      toast({ title: t("dashboard.moodLogged"), description: t("dashboard.moodLoggedDesc") });
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to save mood. Please try again.",
-        variant: "destructive",
-      });
+      toast({ title: t("common.error"), description: t("dashboard.moodLoggedError"), variant: "destructive" });
     }
   };
 
   const handleJournalSave = (entry: string) => {
     setIsAnalyzing(true);
-    toast({
-      title: "Journal saved",
-      description: "Your journal entry has been saved successfully.",
-    });
+    toast({ title: t("dashboard.journalSaved"), description: t("dashboard.journalSavedDesc") });
     setTimeout(() => setIsAnalyzing(false), 1000);
   };
 
   const today = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
+    weekday: "long", year: "numeric", month: "long", day: "numeric",
   });
 
   return (
@@ -66,24 +55,19 @@ export default function Dashboard() {
       <Navbar />
       <ParallaxBackground variant="page" />
       <main className="container py-8">
-        {/* Header */}
         <div className="mb-8 animate-fade-up">
           <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <Calendar className="h-4 w-4" />
             <span className="text-sm">{today}</span>
           </div>
           <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">
-            Welcome back 👋
+            {t("dashboard.welcome")}
           </h1>
-          <p className="text-muted-foreground mt-2">
-            How are you feeling today? Let's check in together.
-          </p>
+          <p className="text-muted-foreground mt-2">{t("dashboard.subtitle")}</p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Mood Selector Card */}
             <Card className="gradient-card border-border/30 animate-fade-up" style={{ animationDelay: "100ms" }}>
               <CardContent className="p-6">
                 {moodLoading ? (
@@ -92,85 +76,45 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   <>
-                    <MoodSelector 
-                      selectedMood={todaysMood}
-                      onMoodSelect={handleMoodSelect}
-                    />
+                    <MoodSelector selectedMood={todaysMood} onMoodSelect={handleMoodSelect} />
                     {todaysMood && (
                       <div className="mt-4 p-4 rounded-xl bg-primary-soft text-center animate-scale-in">
-                        <p className="text-sm text-primary">
-                          Thanks for sharing! Your mood has been logged.
-                        </p>
+                        <p className="text-sm text-primary">{t("dashboard.thanksSharing")}</p>
                       </div>
                     )}
                   </>
                 )}
               </CardContent>
             </Card>
-
-            {/* Journal Entry */}
             <div className="animate-fade-up" style={{ animationDelay: "200ms" }}>
               <JournalEntry onSave={handleJournalSave} isAnalyzing={isAnalyzing} />
             </div>
-
-            {/* Wellness Exercises */}
             <div className="animate-fade-up" style={{ animationDelay: "300ms" }}>
               <WellnessExercises />
             </div>
           </div>
 
-          {/* Sidebar */}
           <div className="space-y-6">
-            {/* Quick Stats */}
             <div className="animate-fade-up" style={{ animationDelay: "150ms" }}>
               <WellnessTracker />
             </div>
-
-            {/* Weekly Summary */}
             <div className="animate-fade-up" style={{ animationDelay: "200ms" }}>
               <WeeklyWellnessSummary />
             </div>
-
-            {/* AI Insights */}
             <div className="space-y-4 animate-fade-up" style={{ animationDelay: "250ms" }}>
-              <h3 className="font-display text-lg font-semibold text-foreground">AI Insights</h3>
-              
+              <h3 className="font-display text-lg font-semibold text-foreground">{t("dashboard.aiInsights")}</h3>
               {weeklyMoodData.length > 0 ? (
                 <>
-                  <InsightCard
-                    type="sentiment"
-                    title="Mood Tracking Active"
-                    description={`You've logged ${weeklyMoodData.length} mood entries recently. Keep tracking to see patterns!`}
-                    level="positive"
-                  />
-                  
-                  <InsightCard
-                    type="suggestion"
-                    title="Self-Care Tip"
-                    description="Try a 5-minute breathing exercise today. It can help maintain your positive momentum."
-                    level="neutral"
-                  />
+                  <InsightCard type="sentiment" title={t("dashboard.moodTrackingActive")} description={t("dashboard.moodTrackingDesc", { count: weeklyMoodData.length })} level="positive" />
+                  <InsightCard type="suggestion" title={t("dashboard.selfCareTip")} description={t("dashboard.selfCareTipDesc")} level="neutral" />
                 </>
               ) : (
                 <>
-                  <InsightCard
-                    type="suggestion"
-                    title="Start Tracking"
-                    description="Log your first mood to start seeing personalized insights and patterns."
-                    level="neutral"
-                  />
-                  
-                  <InsightCard
-                    type="pattern"
-                    title="Build Your Habit"
-                    description="Regular mood tracking helps identify patterns in your emotional well-being."
-                    level="neutral"
-                  />
+                  <InsightCard type="suggestion" title={t("dashboard.startTracking")} description={t("dashboard.startTrackingDesc")} level="neutral" />
+                  <InsightCard type="pattern" title={t("dashboard.buildHabit")} description={t("dashboard.buildHabitDesc")} level="neutral" />
                 </>
               )}
             </div>
-
-            {/* Resources */}
             <div className="animate-fade-up" style={{ animationDelay: "350ms" }}>
               <QuickResources />
             </div>

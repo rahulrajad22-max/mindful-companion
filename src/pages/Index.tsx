@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { FeatureCard } from "@/components/FeatureCard";
 import { Navbar } from "@/components/Navbar";
@@ -15,48 +16,25 @@ import {
   CheckCircle2
 } from "lucide-react";
 
-const features = [
-  {
-    icon: Brain,
-    title: "AI Sentiment Analysis",
-    description: "Advanced NLP analyzes your journal entries to understand emotional patterns and provide meaningful insights.",
-  },
-  {
-    icon: LineChart,
-    title: "Mood Tracking",
-    description: "Visual dashboards show your emotional trends over time, helping you identify patterns and triggers.",
-  },
-  {
-    icon: Heart,
-    title: "Personalized Support",
-    description: "Receive empathetic, AI-generated suggestions tailored to your unique mental wellness journey.",
-  },
-  {
-    icon: BookOpen,
-    title: "Reflective Journaling",
-    description: "Express your thoughts freely in a safe, private space designed to promote self-reflection.",
-  },
-  {
-    icon: Shield,
-    title: "Private & Secure",
-    description: "Your data is encrypted and protected. We prioritize your privacy above everything else.",
-  },
-  {
-    icon: Sparkles,
-    title: "Wellness Resources",
-    description: "Access curated self-care tips, breathing exercises, and mental health resources when you need them.",
-  },
-];
-
-const benefits = [
-  "Track mood patterns with easy emoji-based logging",
-  "Get AI-powered insights without clinical diagnosis",
-  "Access 24/7 supportive resources and suggestions",
-  "Monitor progress with beautiful visualizations",
-];
-
 export default function Index() {
   const { scrollY, getParallaxStyle } = useParallax();
+  const { t } = useTranslation();
+
+  const features = [
+    { icon: Brain, title: t("home.features.aiAnalysis"), description: t("home.features.aiAnalysisDesc") },
+    { icon: LineChart, title: t("home.features.moodTracking"), description: t("home.features.moodTrackingDesc") },
+    { icon: Heart, title: t("home.features.personalizedSupport"), description: t("home.features.personalizedSupportDesc") },
+    { icon: BookOpen, title: t("home.features.journaling"), description: t("home.features.journalingDesc") },
+    { icon: Shield, title: t("home.features.privacy"), description: t("home.features.privacyDesc") },
+    { icon: Sparkles, title: t("home.features.resources"), description: t("home.features.resourcesDesc") },
+  ];
+
+  const benefits = [
+    t("home.benefits.b1"),
+    t("home.benefits.b2"),
+    t("home.benefits.b3"),
+    t("home.benefits.b4"),
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -76,29 +54,28 @@ export default function Index() {
           >
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary-soft px-4 py-1.5 mb-6">
               <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">AI-Powered Mental Wellness</span>
+              <span className="text-sm font-medium text-primary">{t("home.badge")}</span>
             </div>
             
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-6">
-              Your companion for{" "}
-              <span className="text-primary">mindful</span>{" "}
-              mental wellness
+              {t("home.title")}{" "}
+              <span className="text-primary">{t("home.titleHighlight")}</span>{" "}
+              {t("home.titleEnd")}
             </h1>
             
             <p className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-8 max-w-2xl mx-auto">
-              Track your mood, journal your thoughts, and receive personalized AI insights 
-              to support your mental well-being journey — all in a safe, private space.
+              {t("home.subtitle")}
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/dashboard">
                 <Button variant="hero" size="xl" className="w-full sm:w-auto gap-2">
-                  Start Your Journey
+                  {t("home.cta")}
                   <ArrowRight className="h-5 w-5" />
                 </Button>
               </Link>
               <Button variant="outline" size="xl" className="w-full sm:w-auto">
-                Learn More
+                {t("home.learnMore")}
               </Button>
             </div>
           </div>
@@ -110,17 +87,17 @@ export default function Index() {
         <div className="container">
           <div className="text-center mb-16 animate-fade-up">
             <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Everything you need for mental wellness
+              {t("home.featuresTitle")}
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Powerful features designed with care to support your emotional health journey
+              {t("home.featuresSubtitle")}
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature, index) => (
               <FeatureCard
-                key={feature.title}
+                key={index}
                 icon={feature.icon}
                 title={feature.title}
                 description={feature.description}
@@ -137,15 +114,14 @@ export default function Index() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="animate-fade-up">
               <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-6">
-                Support your mental health with AI that cares
+                {t("home.benefits.title")}
               </h2>
               <p className="text-lg text-muted-foreground mb-8">
-                Our AI analyzes your patterns compassionately, never replacing professional 
-                care but complementing your wellness routine with meaningful insights.
+                {t("home.benefits.subtitle")}
               </p>
               <ul className="space-y-4">
-                {benefits.map((benefit) => (
-                  <li key={benefit} className="flex items-start gap-3">
+                {benefits.map((benefit, i) => (
+                  <li key={i} className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                     <span className="text-foreground">{benefit}</span>
                   </li>
@@ -158,8 +134,8 @@ export default function Index() {
                 <div className="flex items-center gap-4 mb-6">
                   <div className="text-5xl">😊</div>
                   <div>
-                    <p className="font-display text-lg font-semibold text-foreground">Feeling Good</p>
-                    <p className="text-sm text-muted-foreground">Your mood is trending upward this week</p>
+                    <p className="font-display text-lg font-semibold text-foreground">{t("home.feelingGood")}</p>
+                    <p className="text-sm text-muted-foreground">{t("home.moodTrending")}</p>
                   </div>
                 </div>
                 <div className="h-32 bg-gradient-to-t from-primary/10 to-transparent rounded-xl flex items-end justify-around px-4 pb-2">
@@ -184,18 +160,17 @@ export default function Index() {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent_50%)]" />
             <div className="relative">
               <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
-                Ready to start your wellness journey?
+                {t("home.ctaTitle")}
               </h2>
               <p className="text-lg text-primary-foreground/80 mb-8 max-w-xl mx-auto">
-                Join thousands of users who are taking control of their mental health 
-                with AI-powered insights and support.
+                {t("home.ctaSubtitle")}
               </p>
               <Link to="/dashboard">
                 <Button 
                   size="xl" 
                   className="bg-background text-foreground hover:bg-background/90 shadow-elevated"
                 >
-                  Get Started Free
+                  {t("home.ctaButton")}
                 </Button>
               </Link>
             </div>
@@ -214,8 +189,7 @@ export default function Index() {
               <span className="font-display text-lg font-semibold text-foreground">MindfulAI</span>
             </div>
             <p className="text-sm text-muted-foreground text-center md:text-right">
-              Not a replacement for professional mental health care. 
-              If you're in crisis, please seek immediate help.
+              {t("home.footer")}
             </p>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Heart,
@@ -23,16 +24,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-const navItems = [
-  { path: "/", label: "Home", icon: Home },
-  { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/journal", label: "Journal", icon: BookOpen },
-  { path: "/analytics", label: "Analytics", icon: BarChart3 },
-  { path: "/chat", label: "Chat", icon: MessageCircle },
-];
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export function Navbar() {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, loading, signOut } = useAuth();
@@ -40,9 +35,16 @@ export function Navbar() {
   const navRef = useRef<HTMLDivElement>(null);
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
 
+  const navItems = [
+    { path: "/", label: t("nav.home"), icon: Home },
+    { path: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
+    { path: "/journal", label: t("nav.journal"), icon: BookOpen },
+    { path: "/analytics", label: t("nav.analytics"), icon: BarChart3 },
+    { path: "/chat", label: t("nav.chat"), icon: MessageCircle },
+  ];
+
   const isActive = (path: string) => location.pathname === path;
 
-  // Sliding indicator
   useEffect(() => {
     if (!navRef.current) return;
     const activeLink = navRef.current.querySelector(
@@ -61,9 +63,9 @@ export function Navbar() {
   const handleSignOut = async () => {
     const { error } = await signOut();
     if (error) {
-      toast.error("Failed to sign out");
+      toast.error(t("auth.signOutError"));
     } else {
-      toast.success("Signed out successfully");
+      toast.success(t("auth.signOutSuccess"));
       navigate("/");
     }
   };
@@ -81,7 +83,6 @@ export function Navbar() {
       {/* Desktop Top Bar */}
       <header className="sticky top-0 z-50 w-full bg-background/60 backdrop-blur-xl border-b border-border/30">
         <div className="container flex h-16 items-center justify-between">
-          {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 group">
             <div className="gradient-accent p-2 rounded-xl shadow-glow transition-transform duration-300 group-hover:scale-110">
               <Heart className="h-5 w-5 text-primary-foreground" />
@@ -91,12 +92,10 @@ export function Navbar() {
             </span>
           </Link>
 
-          {/* Desktop Floating Pill Nav */}
           <nav
             ref={navRef}
             className="hidden md:flex items-center relative bg-muted/60 backdrop-blur-sm rounded-2xl p-1 border border-border/40"
           >
-            {/* Animated Sliding Indicator */}
             <div
               className="absolute top-1 h-[calc(100%-8px)] rounded-xl bg-background shadow-soft transition-all duration-300 ease-out"
               style={{
@@ -104,7 +103,6 @@ export function Navbar() {
                 width: `${indicatorStyle.width}px`,
               }}
             />
-
             {navItems.map((item) => (
               <Link
                 key={item.path}
@@ -128,8 +126,8 @@ export function Navbar() {
             ))}
           </nav>
 
-          {/* Right Actions */}
           <div className="flex items-center gap-1.5">
+            <LanguageSwitcher />
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -161,11 +159,11 @@ export function Navbar() {
                         className="h-9 w-9 rounded-xl hover:bg-muted"
                       >
                         <User className="h-4 w-4" />
-                        <span className="sr-only">Profile</span>
+                        <span className="sr-only">{t("nav.profile")}</span>
                       </Button>
                     </Link>
                   </TooltipTrigger>
-                  <TooltipContent>Profile</TooltipContent>
+                  <TooltipContent>{t("nav.profile")}</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -176,10 +174,10 @@ export function Navbar() {
                       className="h-9 w-9 rounded-xl hover:bg-destructive/10 hover:text-destructive"
                     >
                       <LogOut className="h-4 w-4" />
-                      <span className="sr-only">Sign Out</span>
+                      <span className="sr-only">{t("nav.signOut")}</span>
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Sign out</TooltipContent>
+                  <TooltipContent>{t("nav.signOut")}</TooltipContent>
                 </Tooltip>
               </>
             ) : (
@@ -187,12 +185,12 @@ export function Navbar() {
                 <Link to="/auth" className="hidden sm:block">
                   <Button variant="ghost" size="sm" className="rounded-xl gap-2">
                     <User className="h-4 w-4" />
-                    Sign In
+                    {t("nav.signIn")}
                   </Button>
                 </Link>
                 <Link to="/auth">
                   <Button size="sm" className="rounded-xl gap-2">
-                    Get Started
+                    {t("nav.getStarted")}
                   </Button>
                 </Link>
               </>
