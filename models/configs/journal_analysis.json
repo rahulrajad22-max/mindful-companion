@@ -1,0 +1,61 @@
+{
+  "model_id": "google/gemini-2.5-flash",
+  "model_family": "Gemini",
+  "provider": "Google DeepMind",
+  "task": "text_analysis",
+  "domain": "sentiment_emotion_detection",
+  "architecture": {
+    "type": "transformer",
+    "context_window": 1000000,
+    "output_max_tokens": 4096
+  },
+  "inference": {
+    "endpoint": "/functions/v1/analyze-journal",
+    "method": "POST",
+    "streaming": false,
+    "response_format": "json",
+    "timeout_ms": 15000
+  },
+  "hyperparameters": {
+    "temperature": 0.3,
+    "top_p": null,
+    "note": "Low temperature for deterministic, consistent analysis output"
+  },
+  "output_schema": {
+    "sentiment_score": {
+      "type": "float",
+      "range": [0.0, 1.0],
+      "description": "Overall sentiment polarity (0=negative, 1=positive)"
+    },
+    "emotions": {
+      "type": "array",
+      "items": "string",
+      "description": "Detected emotional states"
+    },
+    "themes": {
+      "type": "array",
+      "items": "string",
+      "description": "Key topics/themes identified"
+    },
+    "suggestions": {
+      "type": "array",
+      "items": "string",
+      "description": "Actionable wellness recommendations"
+    },
+    "summary": {
+      "type": "string",
+      "description": "Brief insight summary of the entry"
+    }
+  },
+  "preprocessing": {
+    "min_text_length": 10,
+    "max_text_length": 10000,
+    "language_detection": false,
+    "input_sanitization": true
+  },
+  "evaluation": {
+    "sentiment_precision_target": 0.85,
+    "emotion_f1_target": 0.80,
+    "theme_extraction_target": 0.75
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "model_id": "google/gemini-3-flash-preview",
+  "model_family": "Gemini",
+  "provider": "Google DeepMind",
+  "task": "conversational_ai",
+  "domain": "mental_health_wellness",
+  "architecture": {
+    "type": "transformer",
+    "variant": "mixture_of_experts",
+    "context_window": 1000000,
+    "output_max_tokens": 8192
+  },
+  "inference": {
+    "endpoint": "/functions/v1/wellness-chat",
+    "method": "POST",
+    "streaming": true,
+    "stream_format": "server_sent_events",
+    "timeout_ms": 30000
+  },
+  "hyperparameters": {
+    "temperature": null,
+    "top_p": null,
+    "top_k": null,
+    "frequency_penalty": null,
+    "presence_penalty": null,
+    "note": "Using model defaults for balanced creativity and accuracy"
+  },
+  "system_prompt": {
+    "role": "wellness_companion",
+    "personality_traits": [
+      "compassionate",
+      "gentle",
+      "encouraging",
+      "empathetic"
+    ],
+    "constraints": [
+      "never_diagnose",
+      "recommend_professional_help",
+      "concise_responses",
+      "context_aware"
+    ],
+    "capabilities": [
+      "breathing_exercises",
+      "journaling_prompts",
+      "mindfulness_techniques",
+      "emotional_support",
+      "coping_strategies"
+    ],
+    "safety": {
+      "disclaimer_on_sensitive_topics": true,
+      "crisis_helpline_references": true,
+      "no_medical_advice": true
+    }
+  },
+  "error_handling": {
+    "rate_limit_status": 429,
+    "credits_exhausted_status": 402,
+    "retry_strategy": "exponential_backoff",
+    "fallback_message": true
+  },
+  "evaluation": {
+    "response_relevance_target": 4.0,
+    "empathy_score_target": 4.2,
+    "safety_compliance_target": 1.0,
+    "latency_p95_target_ms": 3000
+  }
+}
