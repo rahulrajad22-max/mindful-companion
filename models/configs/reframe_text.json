@@ -1,0 +1,40 @@
+{
+  "model_id": "google/gemini-2.5-flash-lite",
+  "model_family": "Gemini",
+  "provider": "Google DeepMind",
+  "task": "text_rewriting",
+  "domain": "speech_to_text_cleanup",
+  "architecture": {
+    "type": "transformer",
+    "variant": "lightweight",
+    "context_window": 1000000,
+    "output_max_tokens": 2048
+  },
+  "inference": {
+    "endpoint": "/functions/v1/reframe-text",
+    "method": "POST",
+    "streaming": false,
+    "response_format": "json",
+    "timeout_ms": 10000
+  },
+  "hyperparameters": {
+    "temperature": 0.3,
+    "note": "Conservative temperature to preserve original meaning while improving grammar"
+  },
+  "processing_rules": [
+    "fix_grammar_and_punctuation",
+    "remove_filler_words",
+    "preserve_original_meaning",
+    "natural_sentence_flow",
+    "no_content_addition"
+  ],
+  "filler_words_to_remove": [
+    "um", "uh", "like", "you know", "basically",
+    "actually", "literally", "sort of", "kind of"
+  ],
+  "evaluation": {
+    "meaning_preservation_target": 0.95,
+    "grammar_accuracy_target": 0.98,
+    "filler_removal_rate_target": 0.99
+  }
+}
