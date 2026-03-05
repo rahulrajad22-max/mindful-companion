@@ -12,6 +12,7 @@ import Analytics from "./pages/Analytics";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import Chat from "./pages/Chat";
+import Library from "./pages/Library";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,11 @@ const App = () => (
             <Route path="/chat" element={
               <ProtectedRoute>
                 <Chat />
+              </ProtectedRoute>
+            } />
+            <Route path="/library" element={
+              <ProtectedRoute>
+                <Library />
               </ProtectedRoute>
             } />
             <Route path="/profile" element={
