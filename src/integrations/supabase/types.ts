@@ -137,6 +137,42 @@ export type Database = {
         }
         Relationships: []
       }
+      reading_progress: {
+        Row: {
+          book_id: string
+          completed: boolean
+          created_at: string
+          current_chapter: number
+          id: string
+          last_read_at: string
+          started_at: string
+          total_chapters: number
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          completed?: boolean
+          created_at?: string
+          current_chapter?: number
+          id?: string
+          last_read_at?: string
+          started_at?: string
+          total_chapters?: number
+          user_id: string
+        }
+        Update: {
+          book_id?: string
+          completed?: boolean
+          created_at?: string
+          current_chapter?: number
+          id?: string
+          last_read_at?: string
+          started_at?: string
+          total_chapters?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       wellness_logs: {
         Row: {
           created_at: string

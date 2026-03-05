@@ -13,6 +13,7 @@ import {
   Home,
   BarChart3,
   MessageCircle,
+  Library,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -40,6 +41,7 @@ export function Navbar() {
     { path: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
     { path: "/journal", label: t("nav.journal"), icon: BookOpen },
     { path: "/analytics", label: t("nav.analytics"), icon: BarChart3 },
+    { path: "/library", label: "Library", icon: Library },
     { path: "/chat", label: t("nav.chat"), icon: MessageCircle },
   ];
 
