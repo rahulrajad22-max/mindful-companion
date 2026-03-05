@@ -8,6 +8,7 @@ import { useJournalEntries } from "@/hooks/useJournalEntries";
 import { MoodChart } from "@/components/MoodChart";
 import { SentimentTrendsChart } from "@/components/SentimentTrendsChart";
 import { MoodCalendar } from "@/components/MoodCalendar";
+import { MoodHeatmap } from "@/components/MoodHeatmap";
 import { WeeklyWellnessSummary } from "@/components/WeeklyWellnessSummary";
 import { TimeRange } from "@/components/TimeRangeToggle";
 import { BarChart3, TrendingUp, Brain, Calendar, Activity } from "lucide-react";
@@ -70,6 +71,9 @@ export default function Analytics() {
               <MoodChart data={moodData} timeRange={moodTimeRange} onTimeRangeChange={setMoodTimeRange} />
             </div>
             <div className="animate-fade-up" style={{ animationDelay: "400ms" }}>
+              <MoodHeatmap />
+            </div>
+            <div className="animate-fade-up" style={{ animationDelay: "500ms" }}>
               <MoodCalendar />
             </div>
           </div>
