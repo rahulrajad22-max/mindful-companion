@@ -1,7 +1,6 @@
 import { useState, useCallback } from "react";
 import { Navbar } from "@/components/Navbar";
 import { ParallaxBackground } from "@/components/ParallaxBackground";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -28,41 +27,44 @@ export function BookReader({ book, progress, onUpdateProgress, onBack }: BookRea
   const [currentChapter, setCurrentChapter] = useState(
     progress ? Math.min(progress.current_chapter, book.totalChapters) : 1
   );
-  const [flipDirection, setFlipDirection] = useState<"right" | "left" | null>(null);
   const [isFlipping, setIsFlipping] = useState(false);
+  const [flipState, setFlipState] = useState<"idle" | "flipping-forward" | "flipping-back">("idle");
 
   const chapter = book.chapters.find((c) => c.id === currentChapter);
   const progressPercent = Math.round((currentChapter / book.totalChapters) * 100);
 
-  const goToChapter = useCallback(async (chapterNum: number, direction: "right" | "left") => {
-    if (isFlipping) return;
-    setIsFlipping(true);
-    setFlipDirection(direction);
+  const goToChapter = useCallback(
+    async (chapterNum: number, direction: "forward" | "back") => {
+      if (isFlipping || chapterNum < 1 || chapterNum > book.totalChapters) return;
+      setIsFlipping(true);
+      setFlipState(direction === "forward" ? "flipping-forward" : "flipping-back");
 
-    setTimeout(async () => {
-      setCurrentChapter(chapterNum);
-      await onUpdateProgress(book.id, chapterNum, book.totalChapters);
-      setFlipDirection(null);
-      setIsFlipping(false);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }, 500);
-  }, [isFlipping, book.id, book.totalChapters, onUpdateProgress]);
+      setTimeout(async () => {
+        setCurrentChapter(chapterNum);
+        await onUpdateProgress(book.id, chapterNum, book.totalChapters);
+        setFlipState("idle");
+        setIsFlipping(false);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 600);
+    },
+    [isFlipping, book.id, book.totalChapters, onUpdateProgress]
+  );
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <ParallaxBackground variant="subtle" />
-      <main className="container py-8 max-w-4xl">
+      <main className="container py-6 max-w-4xl">
         {/* Top bar */}
-        <div className="flex items-center justify-between mb-6 animate-fade-up">
+        <div className="flex items-center justify-between mb-4 animate-fade-up">
           <Button variant="ghost" size="sm" onClick={onBack} className="rounded-xl gap-2">
-            <ArrowLeft className="h-4 w-4" /> Back to Library
+            <ArrowLeft className="h-4 w-4" /> Library
           </Button>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">
-              {currentChapter}/{book.totalChapters}
+              Ch. {currentChapter}/{book.totalChapters}
             </span>
-            <Progress value={progressPercent} className="w-24 h-1.5" />
+            <Progress value={progressPercent} className="w-20 h-1.5" />
             {progressPercent === 100 && (
               <Badge className="text-[10px] bg-mood-great/20 text-mood-great border-mood-great/30">
                 <CheckCircle2 className="h-3 w-3 mr-1" /> Done
@@ -71,106 +73,135 @@ export function BookReader({ book, progress, onUpdateProgress, onBack }: BookRea
           </div>
         </div>
 
-        {/* Book cover header */}
-        <div className="text-center mb-8 animate-fade-up" style={{ animationDelay: "100ms" }}>
-          <div className="text-5xl mb-3">{book.coverEmoji}</div>
-          <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">{book.title}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{book.author}</p>
-        </div>
-
-        {/* Chapter navigation pills */}
-        <div className="flex gap-2 overflow-x-auto pb-2 mb-6 animate-fade-up" style={{ animationDelay: "150ms" }}>
-          {book.chapters.map((ch) => (
-            <Button
-              key={ch.id}
-              variant={currentChapter === ch.id ? "default" : "outline"}
-              size="sm"
-              className="rounded-xl text-xs whitespace-nowrap flex-shrink-0"
-              disabled={isFlipping}
-              onClick={() => {
-                if (ch.id !== currentChapter) {
-                  goToChapter(ch.id, ch.id > currentChapter ? "right" : "left");
-                }
+        {/* ═══════ Book ═══════ */}
+        <div
+          className="animate-fade-up mx-auto"
+          style={{ perspective: "2200px", animationDelay: "100ms" }}
+        >
+          {/* Book wrapper — gives the 3-D spine feel */}
+          <div className="relative mx-auto max-w-3xl">
+            {/* Spine shadow on the left */}
+            <div className="absolute -left-1 top-2 bottom-2 w-4 rounded-l-md z-20 pointer-events-none"
+              style={{
+                background: "linear-gradient(to right, hsl(var(--foreground)/0.10), transparent)",
               }}
-            >
-              {ch.id}. {ch.title}
-            </Button>
-          ))}
-        </div>
+            />
 
-        {/* Book-style page with flip animation */}
-        {chapter && (
-          <div className="perspective-book animate-fade-up" style={{ animationDelay: "200ms" }}>
+            {/* Stacked-page effect behind the card */}
+            <div className="absolute inset-0 translate-x-[3px] translate-y-[3px] rounded-r-md rounded-l-sm bg-muted/50 border border-border/20" />
+            <div className="absolute inset-0 translate-x-[6px] translate-y-[6px] rounded-r-md rounded-l-sm bg-muted/30 border border-border/10" />
+
+            {/* ── The flipping page ── */}
             <div
-              className={`book-page transition-all duration-500 ${
-                flipDirection === "right" ? "book-page-flip-right" : ""
-              } ${flipDirection === "left" ? "book-page-flip-left" : ""}`}
+              className={`relative z-10 transition-transform duration-[600ms] ease-in-out origin-left
+                ${flipState === "flipping-forward" ? "[transform:rotateY(-90deg)]" : ""}
+                ${flipState === "flipping-back" ? "[transform:rotateY(90deg)]" : ""}
+                ${flipState === "idle" ? "[transform:rotateY(0deg)]" : ""}
+              `}
+              style={{ transformStyle: "preserve-3d", backfaceVisibility: "hidden" }}
             >
-              <Card className="book-shadow border-border/30 rounded-sm overflow-hidden">
-                {/* Page edge decoration */}
-                <div className="absolute top-0 right-0 bottom-0 w-3 bg-gradient-to-l from-muted/60 to-transparent pointer-events-none z-10" />
-                <div className="absolute top-0 left-0 bottom-0 w-1 bg-gradient-to-r from-muted/40 to-transparent pointer-events-none z-10" />
+              <div
+                className="rounded-r-md rounded-l-sm border border-border/40 overflow-hidden"
+                style={{
+                  background: "var(--gradient-card)",
+                  boxShadow:
+                    "inset -4px 0 12px hsl(var(--foreground)/0.04), 6px 4px 24px hsl(var(--foreground)/0.08)",
+                }}
+              >
+                {/* Right-edge page thickness lines */}
+                <div className="absolute top-0 right-0 bottom-0 w-3 pointer-events-none z-10"
+                  style={{
+                    background:
+                      "repeating-linear-gradient(to right, transparent, transparent 1px, hsl(var(--border)) 1px, hsl(var(--border)) 1.5px)",
+                    opacity: 0.35,
+                  }}
+                />
 
-                <CardContent className="p-8 md:p-12 relative bg-card min-h-[60vh]">
-                  {/* Page number watermark */}
-                  <div className="absolute top-4 right-6 text-xs text-muted-foreground/40 font-display">
-                    Page {chapter.id} of {book.totalChapters}
-                  </div>
+                {/* Inner page content */}
+                {chapter && (
+                  <div className="relative p-6 sm:p-8 md:p-12 min-h-[55vh]">
+                    {/* Watermark page number */}
+                    <span className="absolute top-4 right-6 text-[11px] text-muted-foreground/30 font-display select-none">
+                      {currentChapter} / {book.totalChapters}
+                    </span>
 
-                  <div className="flex items-center gap-2 mb-6">
-                    <Badge variant="secondary" className="text-xs">
-                      <BookOpen className="h-3 w-3 mr-1" /> Chapter {chapter.id}
-                    </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      <Clock className="h-3 w-3 mr-1" /> {chapter.readingTime} min read
-                    </Badge>
-                  </div>
+                    {/* Chapter title area */}
+                    <div className="mb-8 pb-4 border-b border-border/40">
+                      <div className="text-4xl mb-3 text-center">{book.coverEmoji}</div>
+                      <h2 className="font-display text-xl md:text-2xl font-bold text-foreground text-center leading-snug">
+                        {chapter.title}
+                      </h2>
+                      <p className="text-xs text-muted-foreground text-center mt-2">{book.title}</p>
+                      <div className="flex items-center justify-center gap-2 mt-3">
+                        <Badge variant="secondary" className="text-[10px]">
+                          <BookOpen className="h-3 w-3 mr-1" /> Chapter {chapter.id}
+                        </Badge>
+                        <Badge variant="outline" className="text-[10px]">
+                          <Clock className="h-3 w-3 mr-1" /> {chapter.readingTime} min
+                        </Badge>
+                      </div>
+                    </div>
 
-                  <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none
-                    prose-headings:font-display prose-headings:text-foreground
-                    prose-p:text-foreground/80 prose-p:leading-relaxed
-                    prose-strong:text-foreground
-                    prose-blockquote:border-primary prose-blockquote:text-muted-foreground prose-blockquote:italic
-                    prose-li:text-foreground/80
-                    prose-table:text-sm
-                    prose-th:text-foreground prose-td:text-foreground/80
-                    prose-th:border-border prose-td:border-border
-                    prose-hr:border-border">
-                    <ReactMarkdown>{chapter.content}</ReactMarkdown>
-                  </div>
+                    {/* Markdown body */}
+                    <div
+                      className="prose prose-sm md:prose-base dark:prose-invert max-w-none
+                        prose-headings:font-display prose-headings:text-foreground
+                        prose-p:text-foreground/80 prose-p:leading-[1.85]
+                        prose-strong:text-foreground
+                        prose-blockquote:border-primary prose-blockquote:text-muted-foreground prose-blockquote:italic prose-blockquote:pl-4
+                        prose-li:text-foreground/80
+                        prose-table:text-sm prose-th:text-foreground prose-td:text-foreground/80
+                        prose-th:border-border prose-td:border-border
+                        prose-hr:border-border"
+                    >
+                      <ReactMarkdown>{chapter.content}</ReactMarkdown>
+                    </div>
 
-                  {/* Bottom page curl hint */}
-                  <div className="absolute bottom-0 right-0 w-12 h-12 overflow-hidden pointer-events-none">
-                    <div className="absolute bottom-0 right-0 w-16 h-16 bg-gradient-to-tl from-muted/30 to-transparent transform rotate-0 rounded-tl-lg" />
+                    {/* Bottom page-curl decoration */}
+                    <div className="absolute bottom-0 right-0 w-14 h-14 pointer-events-none overflow-hidden">
+                      <div
+                        className="absolute bottom-0 right-0 w-20 h-20 rounded-tl-2xl"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, transparent 50%, hsl(var(--muted)/0.5) 50%)",
+                        }}
+                      />
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
+                )}
+              </div>
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Bottom navigation with page-turn style */}
-        <div className="flex items-center justify-between mt-8 mb-12 animate-fade-up" style={{ animationDelay: "250ms" }}>
+        {/* ── Bottom navigation ── */}
+        <div className="flex items-center justify-between mt-8 mb-12 animate-fade-up" style={{ animationDelay: "200ms" }}>
           <Button
             variant="outline"
             className="rounded-xl gap-2 shadow-soft"
             disabled={currentChapter <= 1 || isFlipping}
-            onClick={() => goToChapter(currentChapter - 1, "left")}
+            onClick={() => goToChapter(currentChapter - 1, "back")}
           >
-            <ChevronLeft className="h-4 w-4" /> Previous Page
+            <ChevronLeft className="h-4 w-4" /> Prev
           </Button>
 
-          <div className="flex gap-1.5">
+          {/* Dot indicators */}
+          <div className="flex gap-1.5 items-center">
             {book.chapters.map((ch) => (
-              <div
+              <button
                 key={ch.id}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  ch.id === currentChapter
-                    ? "bg-primary scale-125"
+                disabled={isFlipping}
+                onClick={() => {
+                  if (ch.id !== currentChapter)
+                    goToChapter(ch.id, ch.id > currentChapter ? "forward" : "back");
+                }}
+                className={`rounded-full transition-all duration-300 cursor-pointer
+                  ${ch.id === currentChapter
+                    ? "w-6 h-2 bg-primary"
                     : ch.id < currentChapter
-                    ? "bg-primary/40"
-                    : "bg-muted-foreground/20"
-                }`}
+                    ? "w-2 h-2 bg-primary/40 hover:bg-primary/60"
+                    : "w-2 h-2 bg-muted-foreground/20 hover:bg-muted-foreground/40"
+                  }`}
               />
             ))}
           </div>
@@ -179,17 +210,17 @@ export function BookReader({ book, progress, onUpdateProgress, onBack }: BookRea
             <Button
               className="rounded-xl gap-2 shadow-soft"
               disabled={isFlipping}
-              onClick={() => goToChapter(currentChapter + 1, "right")}
+              onClick={() => goToChapter(currentChapter + 1, "forward")}
             >
-              Next Page <ChevronRight className="h-4 w-4" />
+              Next <ChevronRight className="h-4 w-4" />
             </Button>
           ) : (
             <Button
               className="rounded-xl gap-2 bg-mood-great hover:bg-mood-great/90 shadow-soft"
               disabled={isFlipping}
-              onClick={() => goToChapter(book.totalChapters, "right")}
+              onClick={() => goToChapter(book.totalChapters, "forward")}
             >
-              <CheckCircle2 className="h-4 w-4" /> Mark Complete
+              <CheckCircle2 className="h-4 w-4" /> Complete
             </Button>
           )}
         </div>
