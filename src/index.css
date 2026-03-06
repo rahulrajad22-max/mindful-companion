@@ -276,3 +276,39 @@
     padding-bottom: 5rem;
   }
 }
+
+/* Book page flip animations */
+@keyframes pageFlipRight {
+  0% { transform: rotateY(0deg); }
+  100% { transform: rotateY(-180deg); }
+}
+
+@keyframes pageFlipLeft {
+  0% { transform: rotateY(-180deg); }
+  100% { transform: rotateY(0deg); }
+}
+
+.book-page-flip-right {
+  animation: pageFlipRight 0.6s ease-in-out forwards;
+  transform-origin: left center;
+}
+
+.book-page-flip-left {
+  animation: pageFlipLeft 0.6s ease-in-out forwards;
+  transform-origin: left center;
+}
+
+.perspective-book {
+  perspective: 1800px;
+}
+
+.book-page {
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+.book-shadow {
+  box-shadow: 
+    inset -3px 0 8px hsl(var(--foreground) / 0.06),
+    4px 0 12px hsl(var(--foreground) / 0.08);
+}
