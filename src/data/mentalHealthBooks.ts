@@ -25,6 +25,9 @@ export const BOOK_CATEGORIES = [
   "Mindfulness",
   "Relationships",
   "Resilience",
+  "PTSD & Trauma",
+  "Addiction Recovery",
+  "Sleep & Rest",
 ] as const;
 
 export const mentalHealthBooks: Book[] = [
@@ -1228,3 +1231,7 @@ Resilience is not about being unbreakable. It's about being able to **bend witho
     ],
   },
 ];
+
+// Import and merge additional books
+import { additionalBooks } from "./newBooks";
+mentalHealthBooks.push(...additionalBooks);
