@@ -1,8 +1,35 @@
+export interface QuizOption {
+  text: string;
+  correct?: boolean;
+}
+
+export interface QuizElement {
+  type: "quiz";
+  question: string;
+  options: QuizOption[];
+  explanation: string;
+}
+
+export interface ReflectionElement {
+  type: "reflection";
+  prompt: string;
+  placeholder?: string;
+}
+
+export interface CheckpointElement {
+  type: "checkpoint";
+  title: string;
+  checklist: string[];
+}
+
+export type InteractiveElement = QuizElement | ReflectionElement | CheckpointElement;
+
 export interface BookChapter {
   id: number;
   title: string;
   content: string;
   readingTime: number; // minutes
+  interactives?: InteractiveElement[];
 }
 
 export interface Book {
@@ -1235,3 +1262,16 @@ Resilience is not about being unbreakable. It's about being able to **bend witho
 // Import and merge additional books
 import { additionalBooks } from "./newBooks";
 mentalHealthBooks.push(...additionalBooks);
+
+// Import and merge interactive elements into chapters
+import { chapterInteractives } from "./chapterInteractives";
+mentalHealthBooks.forEach((book) => {
+  const bookInteractives = chapterInteractives[book.id];
+  if (bookInteractives) {
+    book.chapters.forEach((chapter) => {
+      if (bookInteractives[chapter.id]) {
+        chapter.interactives = bookInteractives[chapter.id];
+      }
+    });
+  }
+});
