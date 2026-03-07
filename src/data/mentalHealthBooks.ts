@@ -1262,3 +1262,16 @@ Resilience is not about being unbreakable. It's about being able to **bend witho
 // Import and merge additional books
 import { additionalBooks } from "./newBooks";
 mentalHealthBooks.push(...additionalBooks);
+
+// Import and merge interactive elements into chapters
+import { chapterInteractives } from "./chapterInteractives";
+mentalHealthBooks.forEach((book) => {
+  const bookInteractives = chapterInteractives[book.id];
+  if (bookInteractives) {
+    book.chapters.forEach((chapter) => {
+      if (bookInteractives[chapter.id]) {
+        chapter.interactives = bookInteractives[chapter.id];
+      }
+    });
+  }
+});
