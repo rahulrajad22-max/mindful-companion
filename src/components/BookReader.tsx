@@ -6,7 +6,10 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ChevronLeft, ChevronRight, Clock, CheckCircle2, BookOpen } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import type { Book } from "@/data/mentalHealthBooks";
+import { ChapterQuiz } from "@/components/chapter/ChapterQuiz";
+import { ChapterReflection } from "@/components/chapter/ChapterReflection";
+import { ChapterCheckpoint } from "@/components/chapter/ChapterCheckpoint";
+import type { Book, InteractiveElement } from "@/data/mentalHealthBooks";
 
 interface ReadingProgressData {
   book_id: string;
@@ -21,6 +24,17 @@ interface BookReaderProps {
   progress?: ReadingProgressData;
   onUpdateProgress: (bookId: string, chapter: number, totalChapters: number) => Promise<void>;
   onBack: () => void;
+}
+
+function renderInteractive(el: InteractiveElement, i: number) {
+  switch (el.type) {
+    case "quiz":
+      return <ChapterQuiz key={`quiz-${i}`} quiz={el} index={i} />;
+    case "reflection":
+      return <ChapterReflection key={`ref-${i}`} prompt={el.prompt} placeholder={el.placeholder} index={i} />;
+    case "checkpoint":
+      return <ChapterCheckpoint key={`cp-${i}`} title={el.title} checklist={el.checklist} index={i} />;
+  }
 }
 
 export function BookReader({ book, progress, onUpdateProgress, onBack }: BookReaderProps) {
@@ -73,25 +87,18 @@ export function BookReader({ book, progress, onUpdateProgress, onBack }: BookRea
           </div>
         </div>
 
-        {/* ═══════ Book ═══════ */}
+        {/* Book */}
         <div
           className="animate-fade-up mx-auto"
           style={{ perspective: "2200px", animationDelay: "100ms" }}
         >
-          {/* Book wrapper — gives the 3-D spine feel */}
           <div className="relative mx-auto max-w-3xl">
-            {/* Spine shadow on the left */}
             <div className="absolute -left-1 top-2 bottom-2 w-4 rounded-l-md z-20 pointer-events-none"
-              style={{
-                background: "linear-gradient(to right, hsl(var(--foreground)/0.10), transparent)",
-              }}
+              style={{ background: "linear-gradient(to right, hsl(var(--foreground)/0.10), transparent)" }}
             />
-
-            {/* Stacked-page effect behind the card */}
             <div className="absolute inset-0 translate-x-[3px] translate-y-[3px] rounded-r-md rounded-l-sm bg-muted/50 border border-border/20" />
             <div className="absolute inset-0 translate-x-[6px] translate-y-[6px] rounded-r-md rounded-l-sm bg-muted/30 border border-border/10" />
 
-            {/* ── The flipping page ── */}
             <div
               className={`relative z-10 transition-transform duration-[600ms] ease-in-out origin-left
                 ${flipState === "flipping-forward" ? "[transform:rotateY(-90deg)]" : ""}
@@ -104,28 +111,22 @@ export function BookReader({ book, progress, onUpdateProgress, onBack }: BookRea
                 className="rounded-r-md rounded-l-sm border border-border/40 overflow-hidden"
                 style={{
                   background: "var(--gradient-card)",
-                  boxShadow:
-                    "inset -4px 0 12px hsl(var(--foreground)/0.04), 6px 4px 24px hsl(var(--foreground)/0.08)",
+                  boxShadow: "inset -4px 0 12px hsl(var(--foreground)/0.04), 6px 4px 24px hsl(var(--foreground)/0.08)",
                 }}
               >
-                {/* Right-edge page thickness lines */}
                 <div className="absolute top-0 right-0 bottom-0 w-3 pointer-events-none z-10"
                   style={{
-                    background:
-                      "repeating-linear-gradient(to right, transparent, transparent 1px, hsl(var(--border)) 1px, hsl(var(--border)) 1.5px)",
+                    background: "repeating-linear-gradient(to right, transparent, transparent 1px, hsl(var(--border)) 1px, hsl(var(--border)) 1.5px)",
                     opacity: 0.35,
                   }}
                 />
 
-                {/* Inner page content */}
                 {chapter && (
                   <div className="relative p-6 sm:p-8 md:p-12 min-h-[55vh]">
-                    {/* Watermark page number */}
                     <span className="absolute top-4 right-6 text-[11px] text-muted-foreground/30 font-display select-none">
                       {currentChapter} / {book.totalChapters}
                     </span>
 
-                    {/* Chapter title area */}
                     <div className="mb-8 pb-4 border-b border-border/40">
                       <div className="text-4xl mb-3 text-center">{book.coverEmoji}</div>
                       <h2 className="font-display text-xl md:text-2xl font-bold text-foreground text-center leading-snug">
@@ -157,14 +158,20 @@ export function BookReader({ book, progress, onUpdateProgress, onBack }: BookRea
                       <ReactMarkdown>{chapter.content}</ReactMarkdown>
                     </div>
 
-                    {/* Bottom page-curl decoration */}
+                    {/* Interactive elements */}
+                    {chapter.interactives && chapter.interactives.length > 0 && (
+                      <div className="mt-8 pt-6 border-t border-border/30 space-y-2">
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-4">
+                          📝 Interactive Activities
+                        </p>
+                        {chapter.interactives.map((el, i) => renderInteractive(el, i))}
+                      </div>
+                    )}
+
                     <div className="absolute bottom-0 right-0 w-14 h-14 pointer-events-none overflow-hidden">
                       <div
                         className="absolute bottom-0 right-0 w-20 h-20 rounded-tl-2xl"
-                        style={{
-                          background:
-                            "linear-gradient(135deg, transparent 50%, hsl(var(--muted)/0.5) 50%)",
-                        }}
+                        style={{ background: "linear-gradient(135deg, transparent 50%, hsl(var(--muted)/0.5) 50%)" }}
                       />
                     </div>
                   </div>
@@ -174,7 +181,7 @@ export function BookReader({ book, progress, onUpdateProgress, onBack }: BookRea
           </div>
         </div>
 
-        {/* ── Bottom navigation ── */}
+        {/* Bottom navigation */}
         <div className="flex items-center justify-between mt-8 mb-12 animate-fade-up" style={{ animationDelay: "200ms" }}>
           <Button
             variant="outline"
@@ -185,7 +192,6 @@ export function BookReader({ book, progress, onUpdateProgress, onBack }: BookRea
             <ChevronLeft className="h-4 w-4" /> Prev
           </Button>
 
-          {/* Dot indicators */}
           <div className="flex gap-1.5 items-center">
             {book.chapters.map((ch) => (
               <button
