@@ -1,8 +1,35 @@
+export interface QuizOption {
+  text: string;
+  correct?: boolean;
+}
+
+export interface QuizElement {
+  type: "quiz";
+  question: string;
+  options: QuizOption[];
+  explanation: string;
+}
+
+export interface ReflectionElement {
+  type: "reflection";
+  prompt: string;
+  placeholder?: string;
+}
+
+export interface CheckpointElement {
+  type: "checkpoint";
+  title: string;
+  checklist: string[];
+}
+
+export type InteractiveElement = QuizElement | ReflectionElement | CheckpointElement;
+
 export interface BookChapter {
   id: number;
   title: string;
   content: string;
   readingTime: number; // minutes
+  interactives?: InteractiveElement[];
 }
 
 export interface Book {
