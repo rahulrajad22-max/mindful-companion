@@ -69,9 +69,9 @@ export function Leaderboard() {
   };
 
   const rankIcon = (i: number) => {
-    if (i === 0) return <Crown className="h-4 w-4 text-yellow-500" />;
-    if (i === 1) return <Medal className="h-4 w-4 text-gray-400" />;
-    if (i === 2) return <Medal className="h-4 w-4 text-amber-600" />;
+    if (i === 0) return <Crown className="h-4 w-4 text-accent" />;
+    if (i === 1) return <Medal className="h-4 w-4 text-muted-foreground" />;
+    if (i === 2) return <Medal className="h-4 w-4 text-primary" />;
     return <span className="text-xs font-bold text-muted-foreground w-4 text-center">{i + 1}</span>;
   };
 

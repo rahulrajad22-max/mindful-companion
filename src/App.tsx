@@ -53,6 +53,11 @@ const App = () => (
                 <Library />
               </ProtectedRoute>
             } />
+            <Route path="/games" element={
+              <ProtectedRoute>
+                <Games />
+              </ProtectedRoute>
+            } />
             <Route path="/profile" element={
               <ProtectedRoute>
                 <Profile />
