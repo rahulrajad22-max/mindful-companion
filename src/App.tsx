@@ -13,6 +13,7 @@ import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import Chat from "./pages/Chat";
 import Library from "./pages/Library";
+import Games from "./pages/Games";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,11 @@ const App = () => (
             <Route path="/library" element={
               <ProtectedRoute>
                 <Library />
+              </ProtectedRoute>
+            } />
+            <Route path="/games" element={
+              <ProtectedRoute>
+                <Games />
               </ProtectedRoute>
             } />
             <Route path="/profile" element={

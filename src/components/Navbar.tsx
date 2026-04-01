@@ -14,6 +14,7 @@ import {
   BarChart3,
   MessageCircle,
   Library,
+  Gamepad2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -42,6 +43,7 @@ export function Navbar() {
     { path: "/journal", label: t("nav.journal"), icon: BookOpen },
     { path: "/analytics", label: t("nav.analytics"), icon: BarChart3 },
     { path: "/library", label: "Library", icon: Library },
+    { path: "/games", label: "Games", icon: Gamepad2 },
     { path: "/chat", label: t("nav.chat"), icon: MessageCircle },
   ];
 
