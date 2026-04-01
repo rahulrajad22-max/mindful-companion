@@ -238,7 +238,7 @@ export function WellnessExercises() {
     weekCount: 0,
   });
   const [loadingStats, setLoadingStats] = useState(true);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   
   // Voice narration state
   const [voiceEnabled, setVoiceEnabled] = useState(false);
