@@ -1,0 +1,102 @@
+import { useState } from "react";
+import { Navbar } from "@/components/Navbar";
+import { ParallaxBackground } from "@/components/ParallaxBackground";
+import { MoodTrivia } from "@/components/games/MoodTrivia";
+import { MindfulMemory } from "@/components/games/MindfulMemory";
+import { GratitudeWordPuzzle } from "@/components/games/GratitudeWordPuzzle";
+import { Leaderboard } from "@/components/games/Leaderboard";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Brain, Sparkles, BookOpen, Gamepad2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+
+function getWeekStart(): string {
+  const now = new Date();
+  const day = now.getDay();
+  const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(now.setDate(diff));
+  return monday.toISOString().split("T")[0];
+}
+
+export default function Games() {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState("trivia");
+
+  const saveScore = async (gameType: string, score: number) => {
+    if (!user) return;
+    
+    // Get display name from profile
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("user_id", user.id)
+      .single();
+
+    const { error } = await supabase.from("game_scores").insert({
+      user_id: user.id,
+      game_type: gameType,
+      score,
+      week_start: getWeekStart(),
+      display_name: profile?.display_name || user.email?.split("@")[0] || "Player",
+    });
+
+    if (error) {
+      toast.error("Failed to save score");
+    } else {
+      toast.success(`Score saved: ${score} points!`);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background pb-24 md:pb-8">
+      <Navbar />
+      <ParallaxBackground variant="page" />
+      <main className="container py-8">
+        <div className="mb-8 animate-fade-up">
+          <div className="flex items-center gap-2 mb-2">
+            <Gamepad2 className="h-5 w-5 text-primary" />
+            <span className="text-sm text-muted-foreground">Mental Health Games</span>
+          </div>
+          <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">
+            Play & Learn
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Fun games that boost your mental health knowledge. Compete on the weekly leaderboard!
+          </p>
+        </div>
+
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="w-full grid grid-cols-3 mb-6">
+                <TabsTrigger value="trivia" className="gap-1.5">
+                  <Brain className="h-4 w-4" /> Trivia
+                </TabsTrigger>
+                <TabsTrigger value="memory" className="gap-1.5">
+                  <Sparkles className="h-4 w-4" /> Memory
+                </TabsTrigger>
+                <TabsTrigger value="puzzle" className="gap-1.5">
+                  <BookOpen className="h-4 w-4" /> Word Puzzle
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="trivia">
+                <MoodTrivia onGameEnd={(s) => saveScore("trivia", s)} />
+              </TabsContent>
+              <TabsContent value="memory">
+                <MindfulMemory onGameEnd={(s) => saveScore("memory", s)} />
+              </TabsContent>
+              <TabsContent value="puzzle">
+                <GratitudeWordPuzzle onGameEnd={(s) => saveScore("puzzle", s)} />
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          <div className="animate-fade-up" style={{ animationDelay: "200ms" }}>
+            <Leaderboard />
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
