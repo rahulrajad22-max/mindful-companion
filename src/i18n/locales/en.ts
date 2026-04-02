@@ -6,6 +6,8 @@ export default {
     analytics: "Analytics",
     chat: "Chat",
     profile: "Profile",
+    library: "Library",
+    games: "Games",
     signIn: "Sign In",
     signOut: "Sign Out",
     getStarted: "Get Started",
