@@ -6,6 +6,8 @@ export default {
     analytics: "विश्लेषण",
     chat: "चैट",
     profile: "प्रोफ़ाइल",
+    library: "पुस्तकालय",
+    games: "खेल",
     signIn: "साइन इन",
     signOut: "साइन आउट",
     getStarted: "शुरू करें",
