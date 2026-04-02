@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,7 @@ interface GratitudeWordPuzzleProps {
 }
 
 export function GratitudeWordPuzzle({ onGameEnd }: GratitudeWordPuzzleProps) {
+  const { t } = useTranslation();
   const [gameState, setGameState] = useState<"idle" | "playing" | "finished">("idle");
   const [words, setWords] = useState<typeof WORD_SETS>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -93,7 +95,7 @@ export function GratitudeWordPuzzle({ onGameEnd }: GratitudeWordPuzzleProps) {
         }
       }, 1500);
       const correct2 = newGuess.join("") === words[currentIdx].word;
-      void correct2; // already handled
+      void correct2;
     }
   };
 
@@ -110,7 +112,6 @@ export function GratitudeWordPuzzle({ onGameEnd }: GratitudeWordPuzzleProps) {
   const useHint = () => {
     if (hintUsed || showResult) return;
     setHintUsed(true);
-    // Reveal first unrevealed letter
     const word = words[currentIdx].word;
     const nextIdx = guess.length;
     if (nextIdx < word.length) {
@@ -125,15 +126,15 @@ export function GratitudeWordPuzzle({ onGameEnd }: GratitudeWordPuzzleProps) {
       <Card className="border-border/30 overflow-hidden">
         <div className="bg-gradient-to-r from-accent/20 to-secondary/30 p-6 text-center">
           <BookOpen className="h-12 w-12 mx-auto text-accent mb-3" />
-          <h3 className="font-display text-xl font-bold text-foreground">Gratitude Word Puzzle</h3>
-          <p className="text-sm text-muted-foreground mt-2">Unscramble positive psychology words! Use hints wisely — they cost points.</p>
+          <h3 className="font-display text-xl font-bold text-foreground">{t("games.gratitudeTitle")}</h3>
+          <p className="text-sm text-muted-foreground mt-2">{t("games.gratitudeDesc")}</p>
         </div>
         <CardContent className="p-6 text-center">
           <div className="flex gap-4 justify-center mb-6 text-sm text-muted-foreground">
-            <span>5 words</span>
-            <span className="flex items-center gap-1"><Lightbulb className="h-4 w-4" /> 1 hint per word</span>
+            <span>{t("games.words")}</span>
+            <span className="flex items-center gap-1"><Lightbulb className="h-4 w-4" /> {t("games.hintPerWord")}</span>
           </div>
-          <Button onClick={startGame} className="rounded-xl px-8">Start Puzzle</Button>
+          <Button onClick={startGame} className="rounded-xl px-8">{t("games.startPuzzle")}</Button>
         </CardContent>
       </Card>
     );
@@ -144,12 +145,12 @@ export function GratitudeWordPuzzle({ onGameEnd }: GratitudeWordPuzzleProps) {
       <Card className="border-border/30 overflow-hidden">
         <div className="bg-gradient-to-r from-accent/20 to-secondary/30 p-6 text-center">
           <Trophy className="h-12 w-12 mx-auto text-primary mb-3" />
-          <h3 className="font-display text-2xl font-bold text-foreground">Puzzle Complete!</h3>
-          <p className="text-4xl font-bold text-primary mt-2">{score} pts</p>
+          <h3 className="font-display text-2xl font-bold text-foreground">{t("games.puzzleComplete")}</h3>
+          <p className="text-4xl font-bold text-primary mt-2">{score} {t("games.pts")}</p>
         </div>
         <CardContent className="p-6 text-center space-y-2">
-          <p className="text-sm text-muted-foreground">{solved}/5 solved • {timer}s</p>
-          <Button onClick={startGame} className="rounded-xl px-8">Play Again</Button>
+          <p className="text-sm text-muted-foreground">{solved}/5 {t("games.solved")} • {timer}s</p>
+          <Button onClick={startGame} className="rounded-xl px-8">{t("games.playAgain")}</Button>
         </CardContent>
       </Card>
     );
@@ -162,16 +163,15 @@ export function GratitudeWordPuzzle({ onGameEnd }: GratitudeWordPuzzleProps) {
   return (
     <Card className="border-border/30 overflow-hidden">
       <div className="px-5 py-3 flex items-center justify-between bg-muted/50">
-        <Badge variant="secondary">Word {currentIdx + 1}/{words.length}</Badge>
+        <Badge variant="secondary">{t("games.word")} {currentIdx + 1}/{words.length}</Badge>
         <div className="flex items-center gap-3 text-sm">
-          <span className="font-semibold text-foreground">{score} pts</span>
+          <span className="font-semibold text-foreground">{score} {t("games.pts")}</span>
           <span className="text-muted-foreground"><Timer className="h-3 w-3 inline mr-1" />{timer}s</span>
         </div>
       </div>
       <CardContent className="p-5 space-y-4">
         <p className="text-center text-sm text-muted-foreground italic">"{currentWord.hint}"</p>
 
-        {/* Guess slots */}
         <div className="flex justify-center gap-1.5">
           {currentWord.word.split("").map((_, i) => (
             <div
@@ -188,7 +188,6 @@ export function GratitudeWordPuzzle({ onGameEnd }: GratitudeWordPuzzleProps) {
           ))}
         </div>
 
-        {/* Letter tiles */}
         <div className="flex flex-wrap justify-center gap-2">
           {letters.map((l, i) => (
             <button
@@ -206,16 +205,16 @@ export function GratitudeWordPuzzle({ onGameEnd }: GratitudeWordPuzzleProps) {
 
         <div className="flex justify-center gap-2">
           <Button variant="outline" size="sm" className="rounded-xl" onClick={removeLast} disabled={guess.length === 0 || showResult}>
-            ← Undo
+            {t("games.undo")}
           </Button>
           <Button variant="outline" size="sm" className="rounded-xl" onClick={useHint} disabled={hintUsed || showResult}>
-            <Lightbulb className="h-3 w-3 mr-1" /> Hint
+            <Lightbulb className="h-3 w-3 mr-1" /> {t("games.hint")}
           </Button>
         </div>
 
         {showResult && (
           <div className={`text-center text-sm p-2 rounded-xl ${isCorrect ? "bg-mood-great/10 text-mood-great" : "bg-destructive/10 text-destructive"}`}>
-            {isCorrect ? "✨ Correct!" : `The word was: ${currentWord.word}`}
+            {isCorrect ? t("games.correct") : `${t("games.theWordWas")} ${currentWord.word}`}
           </div>
         )}
       </CardContent>

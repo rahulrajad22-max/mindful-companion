@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -85,6 +86,7 @@ interface MoodTriviaProps {
 }
 
 export function MoodTrivia({ onGameEnd }: MoodTriviaProps) {
+  const { t } = useTranslation();
   const [gameState, setGameState] = useState<"idle" | "playing" | "finished">("idle");
   const [currentQ, setCurrentQ] = useState(0);
   const [score, setScore] = useState(0);
@@ -150,15 +152,15 @@ export function MoodTrivia({ onGameEnd }: MoodTriviaProps) {
       <Card className="border-border/30 overflow-hidden">
         <div className="bg-gradient-to-r from-primary/20 to-accent/20 p-6 text-center">
           <Brain className="h-12 w-12 mx-auto text-primary mb-3" />
-          <h3 className="font-display text-xl font-bold text-foreground">Mood Trivia</h3>
-          <p className="text-sm text-muted-foreground mt-2">Test your mental health knowledge! Answer quickly for bonus points.</p>
+          <h3 className="font-display text-xl font-bold text-foreground">{t("games.moodTriviaTitle")}</h3>
+          <p className="text-sm text-muted-foreground mt-2">{t("games.moodTriviaDesc")}</p>
         </div>
         <CardContent className="p-6 text-center">
           <div className="flex gap-4 justify-center mb-6 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1"><Timer className="h-4 w-4" /> 15s per question</span>
-            <span className="flex items-center gap-1"><Zap className="h-4 w-4" /> Streak bonuses</span>
+            <span className="flex items-center gap-1"><Timer className="h-4 w-4" /> {t("games.perQuestion")}</span>
+            <span className="flex items-center gap-1"><Zap className="h-4 w-4" /> {t("games.streakBonuses")}</span>
           </div>
-          <Button onClick={startGame} className="rounded-xl px-8">Start Quiz</Button>
+          <Button onClick={startGame} className="rounded-xl px-8">{t("games.startQuiz")}</Button>
         </CardContent>
       </Card>
     );
@@ -169,12 +171,12 @@ export function MoodTrivia({ onGameEnd }: MoodTriviaProps) {
       <Card className="border-border/30 overflow-hidden">
         <div className="bg-gradient-to-r from-primary/20 to-accent/20 p-6 text-center">
           <Trophy className="h-12 w-12 mx-auto text-primary mb-3" />
-          <h3 className="font-display text-2xl font-bold text-foreground">Quiz Complete!</h3>
-          <p className="text-4xl font-bold text-primary mt-2">{score} pts</p>
+          <h3 className="font-display text-2xl font-bold text-foreground">{t("games.quizComplete")}</h3>
+          <p className="text-4xl font-bold text-primary mt-2">{score} {t("games.pts")}</p>
         </div>
         <CardContent className="p-6 text-center">
-          <p className="text-muted-foreground mb-4">Great job learning about mental health!</p>
-          <Button onClick={startGame} className="rounded-xl px-8">Play Again</Button>
+          <p className="text-muted-foreground mb-4">{t("games.greatJob")}</p>
+          <Button onClick={startGame} className="rounded-xl px-8">{t("games.playAgain")}</Button>
         </CardContent>
       </Card>
     );
@@ -187,10 +189,10 @@ export function MoodTrivia({ onGameEnd }: MoodTriviaProps) {
       <div className="px-5 py-3 flex items-center justify-between bg-muted/50">
         <div className="flex items-center gap-2">
           <Badge variant="secondary">Q{currentQ + 1}/{shuffledQuestions.length}</Badge>
-          {streak >= 2 && <Badge className="bg-accent text-accent-foreground"><Zap className="h-3 w-3 mr-1" />{streak} streak!</Badge>}
+          {streak >= 2 && <Badge className="bg-accent text-accent-foreground"><Zap className="h-3 w-3 mr-1" />{streak} {t("games.streak")}</Badge>}
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold text-foreground">{score} pts</span>
+          <span className="text-sm font-semibold text-foreground">{score} {t("games.pts")}</span>
           <span className={`text-sm font-bold ${timer <= 5 ? "text-destructive animate-pulse" : "text-muted-foreground"}`}>
             <Timer className="h-4 w-4 inline mr-1" />{timer}s
           </span>

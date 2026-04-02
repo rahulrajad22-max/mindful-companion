@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +30,7 @@ interface MindfulMemoryProps {
 }
 
 export function MindfulMemory({ onGameEnd }: MindfulMemoryProps) {
+  const { t } = useTranslation();
   const [gameState, setGameState] = useState<"idle" | "playing" | "finished">("idle");
   const [cards, setCards] = useState<MemoryCard[]>([]);
   const [flippedIds, setFlippedIds] = useState<number[]>([]);
@@ -99,15 +101,15 @@ export function MindfulMemory({ onGameEnd }: MindfulMemoryProps) {
       <Card className="border-border/30 overflow-hidden">
         <div className="bg-gradient-to-r from-secondary/50 to-primary/20 p-6 text-center">
           <Sparkles className="h-12 w-12 mx-auto text-secondary-foreground mb-3" />
-          <h3 className="font-display text-xl font-bold text-foreground">Mindful Memory</h3>
-          <p className="text-sm text-muted-foreground mt-2">Match pairs of positive emotions. Fewer moves = higher score!</p>
+          <h3 className="font-display text-xl font-bold text-foreground">{t("games.mindfulMemoryTitle")}</h3>
+          <p className="text-sm text-muted-foreground mt-2">{t("games.mindfulMemoryDesc")}</p>
         </div>
         <CardContent className="p-6 text-center">
           <div className="flex gap-4 justify-center mb-6 text-sm text-muted-foreground">
-            <span>12 cards • 6 pairs</span>
-            <span className="flex items-center gap-1"><Timer className="h-4 w-4" /> Timed</span>
+            <span>{t("games.cards")}</span>
+            <span className="flex items-center gap-1"><Timer className="h-4 w-4" /> {t("games.timed")}</span>
           </div>
-          <Button onClick={startGame} className="rounded-xl px-8">Start Game</Button>
+          <Button onClick={startGame} className="rounded-xl px-8">{t("games.startGame")}</Button>
         </CardContent>
       </Card>
     );
@@ -118,12 +120,12 @@ export function MindfulMemory({ onGameEnd }: MindfulMemoryProps) {
       <Card className="border-border/30 overflow-hidden">
         <div className="bg-gradient-to-r from-secondary/50 to-primary/20 p-6 text-center">
           <Trophy className="h-12 w-12 mx-auto text-primary mb-3" />
-          <h3 className="font-display text-2xl font-bold text-foreground">All Matched!</h3>
-          <p className="text-4xl font-bold text-primary mt-2">{score} pts</p>
+          <h3 className="font-display text-2xl font-bold text-foreground">{t("games.allMatched")}</h3>
+          <p className="text-4xl font-bold text-primary mt-2">{score} {t("games.pts")}</p>
         </div>
         <CardContent className="p-6 text-center space-y-2">
-          <p className="text-sm text-muted-foreground">{moves} moves • {timer}s</p>
-          <Button onClick={startGame} className="rounded-xl px-8">Play Again</Button>
+          <p className="text-sm text-muted-foreground">{moves} {t("games.moves")} • {timer}s</p>
+          <Button onClick={startGame} className="rounded-xl px-8">{t("games.playAgain")}</Button>
         </CardContent>
       </Card>
     );
@@ -132,9 +134,9 @@ export function MindfulMemory({ onGameEnd }: MindfulMemoryProps) {
   return (
     <Card className="border-border/30 overflow-hidden">
       <div className="px-5 py-3 flex items-center justify-between bg-muted/50">
-        <Badge variant="secondary">{matches}/6 matched</Badge>
+        <Badge variant="secondary">{matches}/6 {t("games.matched")}</Badge>
         <div className="flex items-center gap-3 text-sm">
-          <span className="text-muted-foreground"><RotateCcw className="h-3 w-3 inline mr-1" />{moves} moves</span>
+          <span className="text-muted-foreground"><RotateCcw className="h-3 w-3 inline mr-1" />{moves} {t("games.moves")}</span>
           <span className="text-muted-foreground"><Timer className="h-3 w-3 inline mr-1" />{timer}s</span>
         </div>
       </div>

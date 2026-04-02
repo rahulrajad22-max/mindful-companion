@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Navbar } from "@/components/Navbar";
 import { ParallaxBackground } from "@/components/ParallaxBackground";
 import { MoodTrivia } from "@/components/games/MoodTrivia";
@@ -21,12 +22,12 @@ function getWeekStart(): string {
 
 export default function Games() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("trivia");
 
   const saveScore = async (gameType: string, score: number) => {
     if (!user) return;
     
-    // Get display name from profile
     const { data: profile } = await supabase
       .from("profiles")
       .select("display_name")
@@ -42,9 +43,9 @@ export default function Games() {
     });
 
     if (error) {
-      toast.error("Failed to save score");
+      toast.error(t("games.scoreError"));
     } else {
-      toast.success(`Score saved: ${score} points!`);
+      toast.success(t("games.scoreSaved", { score }));
     }
   };
 
@@ -56,13 +57,13 @@ export default function Games() {
         <div className="mb-8 animate-fade-up">
           <div className="flex items-center gap-2 mb-2">
             <Gamepad2 className="h-5 w-5 text-primary" />
-            <span className="text-sm text-muted-foreground">Mental Health Games</span>
+            <span className="text-sm text-muted-foreground">{t("games.badge")}</span>
           </div>
           <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">
-            Play & Learn
+            {t("games.pageTitle")}
           </h1>
           <p className="text-muted-foreground mt-2">
-            Fun games that boost your mental health knowledge. Compete on the weekly leaderboard!
+            {t("games.pageSubtitle")}
           </p>
         </div>
 
@@ -71,13 +72,13 @@ export default function Games() {
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="w-full grid grid-cols-3 mb-6">
                 <TabsTrigger value="trivia" className="gap-1.5">
-                  <Brain className="h-4 w-4" /> Trivia
+                  <Brain className="h-4 w-4" /> {t("games.trivia")}
                 </TabsTrigger>
                 <TabsTrigger value="memory" className="gap-1.5">
-                  <Sparkles className="h-4 w-4" /> Memory
+                  <Sparkles className="h-4 w-4" /> {t("games.memory")}
                 </TabsTrigger>
                 <TabsTrigger value="puzzle" className="gap-1.5">
-                  <BookOpen className="h-4 w-4" /> Word Puzzle
+                  <BookOpen className="h-4 w-4" /> {t("games.wordPuzzle")}
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="trivia">
