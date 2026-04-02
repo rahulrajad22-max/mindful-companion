@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,6 +23,7 @@ function getWeekStart(): string {
 }
 
 export function Leaderboard() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<Record<string, LeaderboardEntry[]>>({
     all: [],
@@ -77,14 +79,14 @@ export function Leaderboard() {
 
   const renderList = (entries: LeaderboardEntry[]) => {
     if (loading) return Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-xl" />);
-    if (entries.length === 0) return <p className="text-sm text-muted-foreground text-center py-6">No scores this week yet. Be the first!</p>;
+    if (entries.length === 0) return <p className="text-sm text-muted-foreground text-center py-6">{t("games.noScores")}</p>;
 
     return entries.map((entry, i) => (
       <div key={entry.user_id} className={`flex items-center gap-3 p-3 rounded-xl transition-all ${i === 0 ? "bg-primary/10 border border-primary/20" : "bg-muted/30"}`}>
         {rankIcon(i)}
-        <span className="flex-1 text-sm font-medium text-foreground truncate">{entry.display_name || "Anonymous Player"}</span>
-        <span className="text-xs text-muted-foreground">{entry.games_played} games</span>
-        <Badge variant={i === 0 ? "default" : "secondary"} className="font-bold">{entry.total_score} pts</Badge>
+        <span className="flex-1 text-sm font-medium text-foreground truncate">{entry.display_name || t("games.anonymousPlayer")}</span>
+        <span className="text-xs text-muted-foreground">{entry.games_played} {t("games.games")}</span>
+        <Badge variant={i === 0 ? "default" : "secondary"} className="font-bold">{entry.total_score} {t("games.pts")}</Badge>
       </div>
     ));
   };
@@ -94,17 +96,17 @@ export function Leaderboard() {
       <div className="px-5 py-4 flex items-center justify-between border-b border-border/30">
         <div className="flex items-center gap-2">
           <Trophy className="h-5 w-5 text-primary" />
-          <h3 className="font-display text-lg font-bold text-foreground">Weekly Leaderboard</h3>
+          <h3 className="font-display text-lg font-bold text-foreground">{t("games.weeklyLeaderboard")}</h3>
         </div>
-        <Badge variant="outline" className="text-xs"><Timer className="h-3 w-3 mr-1" />Resets Monday</Badge>
+        <Badge variant="outline" className="text-xs"><Timer className="h-3 w-3 mr-1" />{t("games.resetsMonday")}</Badge>
       </div>
       <CardContent className="p-4">
         <Tabs defaultValue="all">
           <TabsList className="w-full grid grid-cols-4 mb-4">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="trivia">Trivia</TabsTrigger>
-            <TabsTrigger value="memory">Memory</TabsTrigger>
-            <TabsTrigger value="puzzle">Puzzle</TabsTrigger>
+            <TabsTrigger value="all">{t("games.all")}</TabsTrigger>
+            <TabsTrigger value="trivia">{t("games.trivia")}</TabsTrigger>
+            <TabsTrigger value="memory">{t("games.memory")}</TabsTrigger>
+            <TabsTrigger value="puzzle">{t("games.wordPuzzle")}</TabsTrigger>
           </TabsList>
           {["all", "trivia", "memory", "puzzle"].map((tab) => (
             <TabsContent key={tab} value={tab} className="space-y-2">
