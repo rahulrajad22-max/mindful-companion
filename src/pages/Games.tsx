@@ -5,9 +5,11 @@ import { ParallaxBackground } from "@/components/ParallaxBackground";
 import { MoodTrivia } from "@/components/games/MoodTrivia";
 import { MindfulMemory } from "@/components/games/MindfulMemory";
 import { GratitudeWordPuzzle } from "@/components/games/GratitudeWordPuzzle";
+import { PositivityBingo } from "@/components/games/PositivityBingo";
+import { DailyChallenge } from "@/components/games/DailyChallenge";
 import { Leaderboard } from "@/components/games/Leaderboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Sparkles, BookOpen, Gamepad2 } from "lucide-react";
+import { Brain, Sparkles, BookOpen, Grid3X3, Sunrise, Gamepad2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -70,15 +72,26 @@ export default function Games() {
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="w-full grid grid-cols-3 mb-6">
-                <TabsTrigger value="trivia" className="gap-1.5">
-                  <Brain className="h-4 w-4" /> {t("games.trivia")}
+              <TabsList className="w-full grid grid-cols-5 mb-6">
+                <TabsTrigger value="trivia" className="gap-1 text-xs sm:text-sm">
+                  <Brain className="h-4 w-4 shrink-0" />
+                  <span className="hidden sm:inline">{t("games.trivia")}</span>
                 </TabsTrigger>
-                <TabsTrigger value="memory" className="gap-1.5">
-                  <Sparkles className="h-4 w-4" /> {t("games.memory")}
+                <TabsTrigger value="memory" className="gap-1 text-xs sm:text-sm">
+                  <Sparkles className="h-4 w-4 shrink-0" />
+                  <span className="hidden sm:inline">{t("games.memory")}</span>
                 </TabsTrigger>
-                <TabsTrigger value="puzzle" className="gap-1.5">
-                  <BookOpen className="h-4 w-4" /> {t("games.wordPuzzle")}
+                <TabsTrigger value="puzzle" className="gap-1 text-xs sm:text-sm">
+                  <BookOpen className="h-4 w-4 shrink-0" />
+                  <span className="hidden sm:inline">{t("games.wordPuzzle")}</span>
+                </TabsTrigger>
+                <TabsTrigger value="bingo" className="gap-1 text-xs sm:text-sm">
+                  <Grid3X3 className="h-4 w-4 shrink-0" />
+                  <span className="hidden sm:inline">{t("games.bingo")}</span>
+                </TabsTrigger>
+                <TabsTrigger value="challenge" className="gap-1 text-xs sm:text-sm">
+                  <Sunrise className="h-4 w-4 shrink-0" />
+                  <span className="hidden sm:inline">{t("games.challenge")}</span>
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="trivia">
@@ -89,6 +102,12 @@ export default function Games() {
               </TabsContent>
               <TabsContent value="puzzle">
                 <GratitudeWordPuzzle onGameEnd={(s) => saveScore("puzzle", s)} />
+              </TabsContent>
+              <TabsContent value="bingo">
+                <PositivityBingo onGameEnd={(s) => saveScore("bingo", s)} />
+              </TabsContent>
+              <TabsContent value="challenge">
+                <DailyChallenge onGameEnd={(s) => saveScore("challenge", s)} />
               </TabsContent>
             </Tabs>
           </div>
