@@ -14,6 +14,7 @@ import Profile from "./pages/Profile";
 import Chat from "./pages/Chat";
 import Library from "./pages/Library";
 import Games from "./pages/Games";
+import Community from "./pages/Community";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
