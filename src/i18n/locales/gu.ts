@@ -77,5 +77,6 @@ export default {
     challengeFinish: "ચેલેન્જ પૂર્ણ કરો",
     anonymousPlayer: "અજ્ઞાત ખેલાડી",
   },
+  community: { badge: "અજ્ઞાત સાથી સહાય", title: "સમુદાય દીવાલ", subtitle: "અજ્ઞાત રીતે તમારા વિચારો શેર કરો. એકબીજાને ટેકો આપો.", placeholder: "દયાળુ, ઉપયોગી, અથવા મનમાં છે તે લખો...", post: "શેર કરો", postSuccess: "તમારો સંદેશ શેર થયો! 💛", postError: "કંઈક ખોટું થયું. ફરી પ્રયાસ કરો.", tooShort: "ઓછામાં ઓછા 10 અક્ષરો લખો.", anonymousNote: "તમારી ઓળખ હંમેશા છુપાયેલી રહે છે.", cat_encouragement: "પ્રોત્સાહન", cat_advice: "સલાહ", cat_gratitude: "કૃતજ્ઞતા", cat_venting: "મન ખોલવું", all: "બધા", empty: "હજુ કોઈ પોસ્ટ નથી. પ્રથમ બનો!", loading: "લોડ થઈ રહ્યું છે...", justNow: "હમણાં" },
   language: { title: "ભાષા", en: "English", hi: "हिन्दी", ta: "தமிழ்", te: "తెలుగు", kn: "ಕನ್ನಡ", ml: "മലയാളം", bn: "বাংলা", mr: "मराठी", gu: "ગુજરાતી", pa: "ਪੰਜਾਬੀ" },
 };
