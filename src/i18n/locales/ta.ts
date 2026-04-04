@@ -329,6 +329,7 @@ export default {
     challengeFinish: "சவாலை முடி",
     anonymousPlayer: "அநாமதேய வீரர்",
   },
+  community: { badge: "அநாமதேய சக ஆதரவு", title: "சமூக சுவர்", subtitle: "அநாமதேயமாக உங்கள் எண்ணங்களை பகிரவும். ஒருவருக்கொருவர் ஆதரவளிக்கவும்.", placeholder: "கனிவானதோ, உதவியானதோ, அல்லது மனதில் உள்ளதை எழுதுங்கள்...", post: "பகிர்", postSuccess: "உங்கள் செய்தி பகிரப்பட்டது! 💛", postError: "ஏதோ தவறு. மீண்டும் முயற்சிக்கவும்.", tooShort: "குறைந்தது 10 எழுத்துகள் எழுதுங்கள்.", anonymousNote: "உங்கள் அடையாளம் எப்போதும் மறைக்கப்படும்.", cat_encouragement: "ஊக்கம்", cat_advice: "ஆலோசனை", cat_gratitude: "நன்றி", cat_venting: "மனக்குறை", all: "அனைத்தும்", empty: "இன்னும் பதிவுகள் இல்லை. முதலில் பகிருங்கள்!", loading: "ஏற்றுகிறது...", justNow: "இப்போது" },
   language: {
     title: "மொழி",
     en: "English",
