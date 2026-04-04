@@ -8,6 +8,7 @@ export default {
     profile: "प्रोफ़ाइल",
     library: "पुस्तकालय",
     games: "खेल",
+    community: "समुदाय",
     signIn: "साइन इन",
     signOut: "साइन आउट",
     getStarted: "शुरू करें",
