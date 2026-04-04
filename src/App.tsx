@@ -59,6 +59,11 @@ const App = () => (
                 <Games />
               </ProtectedRoute>
             } />
+            <Route path="/community" element={
+              <ProtectedRoute>
+                <Community />
+              </ProtectedRoute>
+            } />
             <Route path="/profile" element={
               <ProtectedRoute>
                 <Profile />

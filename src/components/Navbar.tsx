@@ -46,6 +46,7 @@ export function Navbar() {
     { path: "/library", label: t("nav.library"), icon: Library },
     { path: "/games", label: t("nav.games"), icon: Gamepad2 },
     { path: "/chat", label: t("nav.chat"), icon: MessageCircle },
+    { path: "/community", label: t("nav.community"), icon: MessageSquareHeart },
   ];
 
   const isActive = (path: string) => location.pathname === path;
