@@ -15,6 +15,7 @@ import {
   MessageCircle,
   Library,
   Gamepad2,
+  MessageSquareHeart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
