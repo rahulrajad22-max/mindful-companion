@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      community_posts: {
+        Row: {
+          anonymous_name: string
+          category: string
+          content: string
+          created_at: string
+          hearts: number
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          anonymous_name?: string
+          category?: string
+          content: string
+          created_at?: string
+          hearts?: number
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          anonymous_name?: string
+          category?: string
+          content?: string
+          created_at?: string
+          hearts?: number
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       exercise_completions: {
         Row: {
           completed_at: string
@@ -136,6 +169,35 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      post_reactions: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
