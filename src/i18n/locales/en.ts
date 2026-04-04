@@ -8,6 +8,7 @@ export default {
     profile: "Profile",
     library: "Library",
     games: "Games",
+    community: "Community",
     signIn: "Sign In",
     signOut: "Sign Out",
     getStarted: "Get Started",
