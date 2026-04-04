@@ -1,5 +1,5 @@
 export default {
-  nav: { home: "హోమ్", dashboard: "డాష్‌బోర్డ్", journal: "జర్నల్", analytics: "విశ్లేషణలు", chat: "చాట్", profile: "ప్రొఫైల్", signIn: "సైన్ ఇన్", signOut: "సైన్ అవుట్", getStarted: "ప్రారంభించండి" },
+  nav: { home: "హోమ్", dashboard: "డాష్‌బోర్డ్", journal: "జర్నల్", analytics: "విశ్లేషణలు", chat: "చాట్", profile: "ప్రొఫైల్", library: "గ్రంథాలయం", games: "ఆటలు", community: "సమాజం", signIn: "సైన్ ఇన్", signOut: "సైన్ అవుట్", getStarted: "ప్రారంభించండి" },
   home: {
     badge: "AI-ఆధారిత మానసిక శ్రేయస్సు",
     title: "మీ సహచరుడు",
