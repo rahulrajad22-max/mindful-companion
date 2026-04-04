@@ -77,5 +77,6 @@ export default {
     challengeFinish: "आव्हान पूर्ण करा",
     anonymousPlayer: "अनामिक खेळाडू",
   },
+  community: { badge: "अनामिक सहकारी समर्थन", title: "सामुदायिक भिंत", subtitle: "अनामिकपणे विचार सामायिक करा.", placeholder: "दयाळू, उपयुक्त, मनात आहे ते लिहा...", post: "सामायिक करा", postSuccess: "संदेश सामायिक झाला! 💛", postError: "चूक झाली.", tooShort: "किमान 10 अक्षरे लिहा.", anonymousNote: "ओळख नेहमी लपवली जाते.", cat_encouragement: "प्रोत्साहन", cat_advice: "सल्ला", cat_gratitude: "कृतज्ञता", cat_venting: "मन मोकळे", all: "सर्व", empty: "अजून पोस्ट नाहीत.", loading: "लोड होत आहे...", justNow: "आत्ता" },
   language: { title: "भाषा", en: "English", hi: "हिन्दी", ta: "தமிழ்", te: "తెలుగు", kn: "ಕನ್ನಡ", ml: "മലയാളം", bn: "বাংলা", mr: "मराठी", gu: "ગુજરાતી", pa: "ਪੰਜਾਬੀ" },
 };

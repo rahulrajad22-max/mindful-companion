@@ -77,5 +77,6 @@ export default {
     challengeFinish: "চ্যালেঞ্জ শেষ করুন",
     anonymousPlayer: "অজ্ঞাত খেলোয়াড়",
   },
+  community: { badge: "অজ্ঞাত সহকর্মী সহায়তা", title: "সম্প্রদায় দেয়াল", subtitle: "অজ্ঞাতভাবে আপনার চিন্তা শেয়ার করুন।", placeholder: "দয়ালু, সহায়ক, বা মনের কথা লিখুন...", post: "শেয়ার", postSuccess: "আপনার বার্তা শেয়ার হয়েছে! 💛", postError: "কিছু ভুল হয়েছে।", tooShort: "কমপক্ষে ১০টি অক্ষর লিখুন।", anonymousNote: "আপনার পরিচয় সর্বদা লুকানো থাকে।", cat_encouragement: "উৎসাহ", cat_advice: "পরামর্শ", cat_gratitude: "কৃতজ্ঞতা", cat_venting: "মন খোলা", all: "সব", empty: "এখনো কোনো পোস্ট নেই।", loading: "লোড হচ্ছে...", justNow: "এইমাত্র" },
   language: { title: "ভাষা", en: "English", hi: "हिन्दी", ta: "தமிழ்", te: "తెలుగు", kn: "ಕನ್ನಡ", ml: "മലയാളം", bn: "বাংলা", mr: "मराठी", gu: "ગુજરાતી", pa: "ਪੰਜਾਬੀ" },
 };

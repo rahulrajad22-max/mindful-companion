@@ -77,5 +77,6 @@ export default {
     challengeFinish: "ਚੁਣੌਤੀ ਖ਼ਤਮ ਕਰੋ",
     anonymousPlayer: "ਅਗਿਆਤ ਖਿਡਾਰੀ",
   },
+  community: { badge: "ਅਗਿਆਤ ਸਾਥੀ ਸਹਾਇਤਾ", title: "ਭਾਈਚਾਰਾ ਦੀਵਾਰ", subtitle: "ਅਗਿਆਤ ਰੂਪ ਵਿੱਚ ਵਿਚਾਰ ਸਾਂਝੇ ਕਰੋ.", placeholder: "ਦਿਆਲੂ, ਮਦਦਗਾਰ, ਜਾਂ ਮਨ ਵਿੱਚ ਜੋ ਹੈ ਲਿਖੋ...", post: "ਸਾਂਝਾ ਕਰੋ", postSuccess: "ਸੁਨੇਹਾ ਸਾਂਝਾ ਹੋ ਗਿਆ! 💛", postError: "ਕੁਝ ਗਲਤ ਹੋ ਗਿਆ.", tooShort: "ਘੱਟੋ-ਘੱਟ 10 ਅੱਖਰ ਲਿਖੋ.", anonymousNote: "ਪਛਾਣ ਹਮੇਸ਼ਾ ਲੁਕੀ ਰਹਿੰਦੀ ਹੈ.", cat_encouragement: "ਹੌਸਲਾ", cat_advice: "ਸਲਾਹ", cat_gratitude: "ਸ਼ੁਕਰਗੁਜ਼ਾਰੀ", cat_venting: "ਮਨ ਖੋਲ੍ਹਣਾ", all: "ਸਭ", empty: "ਅਜੇ ਕੋਈ ਪੋਸਟ ਨਹੀਂ.", loading: "ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...", justNow: "ਹੁਣੇ" },
   language: { title: "ਭਾਸ਼ਾ", en: "English", hi: "हिन्दी", ta: "தமிழ்", te: "తెలుగు", kn: "ಕನ್ನಡ", ml: "മലയാളം", bn: "বাংলা", mr: "मराठी", gu: "ગુજરાતી", pa: "ਪੰਜਾਬੀ" },
 };
