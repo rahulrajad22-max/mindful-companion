@@ -8,6 +8,7 @@ export default {
     profile: "சுயவிவரம்",
     library: "நூலகம்",
     games: "விளையாட்டுகள்",
+    community: "சமூகம்",
     signIn: "உள்நுழை",
     signOut: "வெளியேறு",
     getStarted: "தொடங்குங்கள்",
