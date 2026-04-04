@@ -1,5 +1,5 @@
 export default {
-  nav: { home: "హోమ్", dashboard: "డాష్‌బోర్డ్", journal: "జర్నల్", analytics: "విశ్లేషణలు", chat: "చాట్", profile: "ప్రొఫైల్", signIn: "సైన్ ఇన్", signOut: "సైన్ అవుట్", getStarted: "ప్రారంభించండి" },
+  nav: { home: "హోమ్", dashboard: "డాష్‌బోర్డ్", journal: "జర్నల్", analytics: "విశ్లేషణలు", chat: "చాట్", profile: "ప్రొఫైల్", library: "గ్రంథాలయం", games: "ఆటలు", community: "సమాజం", signIn: "సైన్ ఇన్", signOut: "సైన్ అవుట్", getStarted: "ప్రారంభించండి" },
   home: {
     badge: "AI-ఆధారిత మానసిక శ్రేయస్సు",
     title: "మీ సహచరుడు",
@@ -93,5 +93,6 @@ export default {
     challengeFinish: "ఛాలెంజ్ ముగించండి",
     anonymousPlayer: "అనామక ఆటగాడు",
   },
+  community: { badge: "అనామక సహచర మద్దతు", title: "సమాజ గోడ", subtitle: "అనామకంగా మీ ఆలోచనలు పంచుకోండి. ఒకరికొకరు మద్దతు ఇవ్వండి.", placeholder: "దయగా, సహాయకరంగా, లేదా మనసులో ఉన్నది రాయండి...", post: "పంచుకోండి", postSuccess: "మీ సందేశం పంచుకోబడింది! 💛", postError: "ఏదో తప్పు జరిగింది. మళ్ళీ ప్రయత్నించండి.", tooShort: "కనీసం 10 అక్షరాలు రాయండి.", anonymousNote: "మీ గుర్తింపు ఎల్లప్పుడూ దాచబడుతుంది.", cat_encouragement: "ప్రోత్సాహం", cat_advice: "సలహా", cat_gratitude: "కృతజ్ఞత", cat_venting: "మనసు విప్పడం", all: "అన్నీ", empty: "ఇంకా పోస్ట్‌లు లేవు. మొదటివారు కండి!", loading: "లోడ్ అవుతోంది...", justNow: "ఇప్పుడే" },
   language: { title: "భాష", en: "English", hi: "हिन्दी", ta: "தமிழ்", te: "తెలుగు", kn: "ಕನ್ನಡ", ml: "മലയാളം", bn: "বাংলা", mr: "मराठी", gu: "ગુજરાતી", pa: "ਪੰਜਾਬੀ" },
 };

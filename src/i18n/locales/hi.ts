@@ -8,6 +8,7 @@ export default {
     profile: "प्रोफ़ाइल",
     library: "पुस्तकालय",
     games: "खेल",
+    community: "समुदाय",
     signIn: "साइन इन",
     signOut: "साइन आउट",
     getStarted: "शुरू करें",
@@ -328,6 +329,7 @@ export default {
     challengeFinish: "चुनौती समाप्त करें",
     anonymousPlayer: "अज्ञात खिलाड़ी",
   },
+  community: { badge: "गुमनाम सहकर्मी सहायता", title: "सामुदायिक दीवार", subtitle: "गुमनाम रूप से अपने विचार साझा करें। एक-दूसरे का साथ दें।", placeholder: "कुछ दयालु, सहायक, या जो मन में हो वो लिखें...", post: "साझा करें", postSuccess: "आपका संदेश साझा हो गया! 💛", postError: "कुछ गलत हुआ। फिर कोशिश करें।", tooShort: "कम से कम 10 अक्षर लिखें।", anonymousNote: "आपकी पहचान हमेशा छिपी रहती है।", cat_encouragement: "प्रोत्साहन", cat_advice: "सलाह", cat_gratitude: "कृतज्ञता", cat_venting: "मन की बात", all: "सभी", empty: "अभी कोई पोस्ट नहीं। पहले बनें!", loading: "लोड हो रहा है...", justNow: "अभी" },
   language: {
     title: "भाषा",
     en: "English",
